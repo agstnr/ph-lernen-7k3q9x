@@ -1,0 +1,1896 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PH-Lerntool</title>
+<style>
+  :root {
+    --bg: #f7f6f2; --flaeche: #ffffff; --text: #1f2328; --leise: #5f6670; --linie: #e3e1da;
+    --akzent: #1f6f5c; --akzent-hell: #e3f1ec; --warn: #8a5a00; --warn-hell: #fbf1dc;
+    --feldrand: #80868e; --rot: #a8322d; --rot-hell: #fbe7e5; --blau: #2b5c9e; --blau-hell: #e6eef9; --grau-hell: #efeee9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16181b; --flaeche: #1e2125; --text: #e6e6e3; --leise: #9aa0a6; --linie: #33373d;
+      --akzent: #5cc2a3; --akzent-hell: #1d3530; --warn: #e2b04a; --warn-hell: #3a2f17;
+      --feldrand: #737980; --rot: #ef8a84; --rot-hell: #3d2220; --blau: #8db4ea; --blau-hell: #1f2b3d; --grau-hell: #2a2d32;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  a { color: var(--akzent); }
+  header { position: sticky; top: 0; z-index: 5; display: flex; gap: 16px; align-items: center; padding: 10px 20px;
+           background: var(--flaeche); border-bottom: 1px solid var(--linie); }
+  header .marke { font-weight: 650; white-space: nowrap; text-decoration: none; color: var(--text); }
+  header nav { display: flex; gap: 6px 14px; flex-wrap: wrap; }
+  header nav a { text-decoration: none; color: var(--leise); }
+  header nav a.aktiv { color: var(--akzent); font-weight: 600; }
+  header form { margin-left: auto; flex: 0 1 360px; }
+  header input { width: 100%; padding: 7px 10px; border: 1px solid var(--linie); border-radius: 6px; background: var(--bg); color: var(--text); font: inherit; }
+  .rahmen { display: grid; grid-template-columns: 290px 1fr; min-height: calc(100vh - 53px); }
+  aside { border-right: 1px solid var(--linie); padding: 14px 10px 40px; overflow: auto; max-height: calc(100vh - 53px); position: sticky; top: 53px; }
+  aside h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--leise); margin: 14px 8px 6px; }
+  aside details { margin: 2px 0; }
+  aside summary { cursor: pointer; padding: 4px 8px; border-radius: 5px; font-weight: 550; list-style-position: outside; }
+  aside summary small { color: var(--leise); font-weight: 400; }
+  aside ul { list-style: none; margin: 2px 0 6px; padding: 0 0 0 14px; }
+  aside li a { display: block; padding: 3px 8px; border-radius: 5px; text-decoration: none; color: var(--text); font-size: 14px; }
+  aside li a:hover { background: var(--grau-hell); }
+  aside li a.aktiv { background: var(--akzent-hell); color: var(--akzent); }
+  main { padding: 22px 28px 80px; min-width: 0; }
+  h1 { font-size: 22px; margin: 0 0 6px; line-height: 1.3; }
+  h2 { font-size: 17px; margin: 0; }
+  .leise { color: var(--leise); }
+  .meta { color: var(--leise); font-size: 14px; display: flex; flex-wrap: wrap; gap: 4px 14px; margin-bottom: 18px; }
+  .chip { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 10px; background: var(--grau-hell); color: var(--leise); white-space: nowrap; }
+  .chip.gruen { background: var(--akzent-hell); color: var(--akzent); }
+  .norm { border: 1px solid var(--linie); background: var(--flaeche); border-radius: 8px; padding: 12px 16px; margin: 12px 0; }
+  .norm h3 { margin: 0 0 4px; font-size: 17px; }
+  .norm .gl { font-size: 13px; }
+  .norm p { margin: 6px 0; }
+  .norm p.listelem { margin-left: 22px; }
+  .norm.ziel { outline: 2px solid var(--akzent); }
+  .norm { scroll-margin-top: 90px; }
+  .rechtsquellen { border-left: 3px solid var(--akzent); padding: 6px 14px; margin: 12px 0; }
+  .rechtsquellen ul { margin: 4px 0; padding-left: 18px; }
+  .chip.gelb { background: var(--warn-hell); color: var(--warn); }
+  .chip.rot { background: var(--rot-hell); color: var(--rot); }
+  .chip.blau { background: var(--blau-hell); color: var(--blau); }
+  .karten { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; margin: 16px 0 24px; }
+  .karte { background: var(--flaeche); border: 1px solid var(--linie); border-radius: 8px; padding: 12px 14px; }
+  .karte .zahl { font-size: 26px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .seite { background: var(--flaeche); border: 1px solid var(--linie); border-radius: 8px; margin: 0 0 16px; scroll-margin-top: 70px; }
+  .seite > .kopf { display: flex; gap: 10px; align-items: baseline; padding: 10px 16px; border-bottom: 1px solid var(--linie); flex-wrap: wrap; }
+  .seite > .kopf .herkunft { margin-left: auto; font-size: 12px; color: var(--leise); }
+  .seite > .inhalt { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 360px); gap: 16px; padding: 14px 16px; }
+  .seite.ohne-bild > .inhalt { grid-template-columns: minmax(0, 1fr); }
+  .text { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .seite img { width: 100%; border: 1px solid var(--linie); border-radius: 4px; cursor: zoom-in; background: #fff; }
+  .hinweis { background: var(--warn-hell); color: var(--warn); padding: 6px 10px; border-radius: 6px; font-size: 14px; margin-bottom: 8px; }
+  .notizen { margin-top: 10px; padding: 8px 10px; border-left: 3px solid var(--linie); color: var(--leise); white-space: pre-wrap; }
+  .linkliste { margin: 12px 0 0; padding: 0; list-style: none; font-size: 14px; }
+  .linkliste li { display: flex; gap: 8px; align-items: baseline; padding: 2px 0; flex-wrap: wrap; }
+  .linkliste a { overflow-wrap: anywhere; }
+  table { border-collapse: collapse; width: 100%; background: var(--flaeche); font-size: 14px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--linie); vertical-align: top; }
+  th { font-weight: 600; color: var(--leise); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  td a { overflow-wrap: anywhere; }
+  .filter { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; align-items: center; }
+  select { padding: 5px 8px; border: 1px solid var(--linie); border-radius: 6px; background: var(--flaeche); color: var(--text); font: inherit; }
+  .treffer { background: var(--flaeche); border: 1px solid var(--linie); border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; }
+  .treffer a { font-weight: 600; text-decoration: none; }
+  mark { background: var(--warn-hell); color: inherit; padding: 0 1px; }
+  .zoom { position: fixed; inset: 0; background: rgba(0,0,0,.8); display: none; align-items: center; justify-content: center; z-index: 20; cursor: zoom-out; }
+  .zoom img { max-width: 96vw; max-height: 96vh; background: #fff; }
+  .springen { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; }
+  .springen input { width: 70px; padding: 4px 8px; border: 1px solid var(--linie); border-radius: 6px; background: var(--flaeche); color: var(--text); font: inherit; }
+  .gliederung { background: var(--flaeche); border: 1px solid var(--linie); border-radius: 8px; padding: 14px 18px; margin: 0 0 22px; }
+  .gliederung > .kopf { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; margin-bottom: 8px; }
+  .gliederung details { border-top: 1px solid var(--linie); padding: 8px 0; }
+  .gliederung summary { cursor: pointer; font-weight: 600; }
+  .gliederung summary .leise { font-weight: 400; font-size: 13px; }
+  .gliederung h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--leise); margin: 10px 0 4px; }
+  .gliederung ul { margin: 0; padding-left: 20px; }
+  .gliederung li { margin: 4px 0; }
+  .gliederung .belege { font-size: 13px; white-space: nowrap; }
+  .gliederung .belege a { text-decoration: none; }
+  .gliederung li.ki { border-left: 3px solid var(--warn); padding-left: 8px; }
+  .rollen { overflow-x: auto; }
+  .bib td:first-child { min-width: 280px; }
+  .bib .angabe { font-size: 13px; color: var(--leise); margin-top: 4px; }
+  .bib ul { margin: 4px 0 0; padding-left: 18px; font-size: 13px; }
+  .knopf { display: inline-block; padding: 5px 12px; border: 1px solid var(--linie); border-radius: 6px; background: var(--flaeche); color: var(--text);
+           font: inherit; font-size: 14px; cursor: pointer; text-decoration: none; }
+  .knopf:hover { border-color: var(--akzent); }
+  .knopf.primaer { background: var(--akzent); color: var(--flaeche); border-color: var(--akzent); }
+  .knopf.an-gruen { background: var(--akzent-hell); color: var(--akzent); border-color: var(--akzent); font-weight: 600; }
+  .knopf.an-rot { background: var(--rot-hell); color: var(--rot); border-color: var(--rot); font-weight: 600; }
+  .chip.lang { white-space: normal; }
+  .chip.vorschlag { background: transparent; border: 1px dashed var(--warn); color: var(--warn); }
+  a.chip { text-decoration: none; }
+  .eintrag { background: var(--flaeche); border: 1px solid var(--linie); border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; }
+  .eintrag.ki { border-left: 3px solid var(--warn); }
+  .eintrag .kopfzeile { display: flex; gap: 6px; flex-wrap: wrap; align-items: baseline; margin-bottom: 4px; }
+  .eintrag .belege, .belegzeile { font-size: 13px; color: var(--leise); }
+  .begruendung { font-size: 14px; background: var(--warn-hell); padding: 6px 10px; border-radius: 6px; margin: 6px 0; }
+  .filter input[type=search] { padding: 6px 10px; border: 1px solid var(--linie); border-radius: 6px; background: var(--flaeche); color: var(--text); font: inherit; flex: 1 1 240px; }
+  .filter label { font-size: 14px; color: var(--leise); }
+  .konzeptliste { columns: 2 340px; column-gap: 24px; padding: 0; list-style: none; margin: 8px 0 24px; }
+  .konzeptliste li { break-inside: avoid; padding: 3px 0; }
+  .konzeptliste .kdef { font-size: 13px; color: var(--leise, #667); line-height: 1.35; }
+  .notiz { width: 100%; padding: 5px 8px; border: 1px solid var(--linie); border-radius: 6px; background: var(--bg); color: var(--text); font: inherit; font-size: 14px; margin-top: 8px; }
+  .aktionen { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+  .legende { display: flex; gap: 6px 18px; flex-wrap: wrap; font-size: 13px; color: var(--leise); align-items: center; margin: 6px 0; }
+  .legende svg { vertical-align: middle; margin-right: 4px; }
+  .graph { background: var(--flaeche); border: 1px solid var(--linie); border-radius: 8px; margin: 10px 0 18px; }
+  .graph svg { display: block; width: 100%; height: auto; }
+  .kante { fill: none; stroke-width: 1.6; }
+  .kante.geprueft { stroke: var(--akzent); } .kante.ki-entwurf { stroke: var(--leise); } .kante.abgelehnt { stroke: var(--rot); opacity: .6; }
+  .kante.vorschlag { stroke-dasharray: 6 4; }
+  .pf-geprueft { fill: var(--akzent); } .pf-ki-entwurf { fill: var(--leise); } .pf-abgelehnt { fill: var(--rot); }
+  .klabel { font-size: 11px; fill: var(--leise); paint-order: stroke; stroke: var(--flaeche); stroke-width: 4px; stroke-linejoin: round; }
+  .knoten rect { fill: var(--flaeche); stroke: var(--linie); stroke-width: 1.2; }
+  .knoten.mitte rect { fill: var(--akzent-hell); stroke: var(--akzent); }
+  .knoten.vorschlag rect { stroke: var(--warn); stroke-dasharray: 4 3; }
+  .knoten text { font-size: 13px; fill: var(--text); }
+  .knoten.mitte text { font-weight: 650; }
+  .knoten.s-gesehen rect { fill: var(--blau-hell); } .knoten.s-verstanden rect { fill: var(--warn-hell); } .knoten.s-sicher rect { fill: var(--akzent-hell); stroke: var(--akzent); }
+  .knoten.blass, .kante.blass { opacity: .22; }
+  .landkarte { overflow-x: auto; position: relative; } .landkarte svg { min-width: 900px; touch-action: none; cursor: grab; } .landkarte svg.zieht { cursor: grabbing; }
+  .lk-werkzeug { position: absolute; top: 8px; right: 8px; z-index: 2; display: flex; gap: 4px; align-items: center; }
+  .lk-werkzeug button { font: inherit; font-size: 15px; min-width: 34px; height: 32px; padding: 0 10px; border: 1px solid var(--linie); border-radius: 6px; background: var(--flaeche); color: var(--text); cursor: pointer; }
+  .lk-werkzeug button:hover { background: var(--akzent-hell); color: var(--akzent); }
+  .lk-werkzeug .lk-hinweis { font-size: 12px; color: var(--leise); margin-right: 6px; }
+  .landkarte:fullscreen, .landkarte.vollbild { background: var(--flaeche); overflow: hidden; margin: 0; border: 0; border-radius: 0; }
+  .landkarte.vollbild { position: fixed; inset: 0; z-index: 50; }
+  .landkarte:fullscreen svg, .landkarte.vollbild svg { width: 100vw; height: 100vh; min-width: 0; }
+  .lk-tipp { position: fixed; z-index: 60; max-width: 340px; padding: 8px 11px; border: 1px solid var(--linie); border-radius: 8px; background: var(--flaeche); color: var(--text); box-shadow: 0 4px 14px rgba(0,0,0,.15); font-size: 13.5px; line-height: 1.4; pointer-events: none; }
+  .lk-tipp strong { display: block; font-size: 14.5px; margin-bottom: 3px; }
+  .lk-tipp .leise { font-size: 12px; margin-top: 4px; }
+  .lk-steckbrief { position: absolute; top: 48px; right: 8px; z-index: 3; width: min(380px, calc(100% - 16px)); max-height: calc(100% - 60px); overflow: auto; padding: 12px 14px; border: 1px solid var(--linie); border-radius: 8px; background: var(--flaeche); box-shadow: 0 6px 20px rgba(0,0,0,.18); font-size: 14px; }
+  .lk-steckbrief h3 { margin: 0 28px 4px 0; font-size: 18px; }
+  .lk-steckbrief h4 { margin: 12px 0 4px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--leise); }
+  .lk-steckbrief ul { margin: 4px 0; padding-left: 18px; } .lk-steckbrief li { margin: 4px 0; }
+  .lk-steckbrief .zu { position: absolute; top: 8px; right: 8px; font: inherit; font-size: 18px; line-height: 1; width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: var(--leise); cursor: pointer; }
+  .lk-steckbrief .zu:hover { background: var(--grau-hell); color: var(--text); }
+  .landkarte .knoten.gewaehlt rect { stroke: var(--akzent); stroke-width: 2.5; }
+  .landkarte .kante { stroke-width: 1.2; opacity: .75; } .landkarte .kante.blass { opacity: .15; }
+  a:hover > .knoten rect { stroke: var(--akzent); stroke-width: 2; }
+  .lernkarte { background: var(--flaeche); border: 1px solid var(--linie); border-radius: 10px; padding: 18px 20px; max-width: 760px; }
+  .lernkarte .frage { font-size: 18px; line-height: 1.45; margin: 10px 0 14px; font-weight: 600; }
+  .lernkarte textarea { width: 100%; min-height: 70px; padding: 8px 10px; border: 1px solid var(--linie); border-radius: 6px; background: var(--bg); color: var(--text); font: inherit; }
+  .aufloesung { border-top: 1px solid var(--linie); margin-top: 14px; padding-top: 12px; }
+  .optionen { display: grid; gap: 8px; }
+  .optionen button { text-align: left; padding: 9px 12px; border: 1px solid var(--linie); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; cursor: pointer; }
+  .optionen button:hover:not(:disabled) { border-color: var(--akzent); }
+  .optionen button:disabled { cursor: default; }
+  .optionen button.richtig { border-color: var(--akzent); background: var(--akzent-hell); }
+  .optionen button.falsch { border-color: var(--rot); background: var(--rot-hell); }
+  .optionen .erkl { display: block; font-size: 13px; color: var(--leise); margin-top: 3px; }
+  .optionen .erkl[hidden] { display: none; }
+  .bewertung { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+  .bewertung.drei { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .bewertung button { padding: 8px 6px; }
+  .bewertung small { display: block; color: var(--leise); font-size: 12px; font-weight: 400; }
+  .fortschrittsbalken { height: 6px; background: var(--grau-hell); border-radius: 3px; overflow: hidden; margin: 6px 0 14px; max-width: 760px; }
+  .fortschrittsbalken div { height: 100%; background: var(--akzent); }
+  .spielblock { background: var(--flaeche); border: 1px solid var(--linie); border-radius: 12px; padding: 16px; margin: 8px 0 20px; }
+  .spielkopf { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+  .ring { position: relative; width: 96px; height: 96px; flex: none; }
+  .ring svg { width: 100%; height: 100%; } .ring .bahn { fill: none; stroke: var(--grau-hell); stroke-width: 9; }
+  .ring .fuell { fill: none; stroke: var(--akzent); stroke-width: 9; stroke-linecap: round; transition: stroke-dashoffset .6s; }
+  .ring .mitte { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; }
+  .ring .mitte strong { font-size: 24px; } .ring .mitte small { color: var(--leise); }
+  .werte { flex: 1 1 260px; min-width: 0; } .werte .gross { font-size: 20px; font-weight: 650; }
+  .woche { display: flex; gap: 8px; margin: 14px 0; }
+  .woche .tag { flex: 1; text-align: center; } .woche .tag span { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; margin: 0 auto; border-radius: 50%; background: var(--grau-hell); color: var(--leise); font-weight: 650; }
+  .woche .tag.teil span { background: var(--warn-hell); color: var(--warn); } .woche .tag.ok span { background: var(--akzent); color: var(--flaeche); }
+  .woche .tag.heute span { outline: 2px solid var(--akzent); outline-offset: 2px; } .woche small { color: var(--leise); font-size: 12px; }
+  .abzeichen summary { cursor: pointer; font-weight: 600; margin-bottom: 8px; }
+  .siegelraster { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+  .siegel { border: 1px solid var(--linie); border-radius: 10px; padding: 8px; text-align: center; font-size: 14px; opacity: .55; }
+  .siegel.da { opacity: 1; background: var(--warn-hell); border-color: var(--warn); } .siegel .sym { font-size: 26px; } .siegel small { display: block; color: var(--leise); font-size: 12px; }
+  .sterne { color: var(--warn); letter-spacing: 2px; } .sterne .leer { color: var(--linie); }
+  .kombo { color: var(--warn); font-weight: 650; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 30px); opacity: 0; pointer-events: none; z-index: 60; background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 12px; font-size: 15px; box-shadow: 0 6px 24px rgba(0,0,0,.25); transition: opacity .2s, transform .25s; max-width: 92vw; text-align: center; }
+  .toast.zeigt { opacity: 1; transform: translate(-50%, 0); } .toast.gut { background: var(--akzent); color: var(--flaeche); } .toast.gross { font-weight: 650; font-size: 16px; }
+  .konfetti { position: fixed; inset: 0; pointer-events: none; z-index: 70; overflow: hidden; }
+  .konfetti span { position: absolute; top: -12px; width: 9px; height: 14px; border-radius: 2px; animation: fall 1.9s ease-in forwards; }
+  @keyframes fall { to { transform: translate(var(--dx), 105vh) rotate(540deg); opacity: .9; } }
+  @media (prefers-reduced-motion: reduce) { .toast, .ring .fuell { transition: none; } }
+  .spielzeile { display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: 14px; color: var(--leise); margin: 0 0 4px; }
+  .spielzeile strong { color: var(--text); font-variant-numeric: tabular-nums; }
+  .filter select { max-width: 100%; }
+  .tabellenrahmen { overflow-x: auto; margin: 8px 0 22px; }
+  .lernkarte .kopfzeile { display: flex; gap: 6px; flex-wrap: wrap; align-items: baseline; }
+  .optionsliste { margin: 4px 0; padding-left: 20px; font-size: 14px; }
+  .zahlrechts { text-align: right; font-variant-numeric: tabular-nums; }
+  @media (max-width: 600px) { .bewertung { grid-template-columns: repeat(2, minmax(0, 1fr)); } .lernkarte { padding: 14px; }
+    td { overflow-wrap: anywhere; } td .chip { white-space: normal; } }
+  @media (max-width: 900px) {
+    .rahmen { grid-template-columns: 1fr; }
+    aside { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--linie); }
+    .seite > .inhalt { grid-template-columns: 1fr; }
+    header { flex-wrap: wrap; padding: 10px 16px; }
+    header form { flex: 1 1 100%; }
+    main { padding: 18px 16px 60px; }
+  }
+  /* Formelsammlung */
+  .formel { border: 1px solid var(--linie); background: var(--flaeche); border-radius: 8px; padding: 14px 18px; margin: 14px 0; scroll-margin-top: 90px; }
+  .formel.ziel { outline: 2px solid var(--akzent); }
+  .formel h3 { margin: 0 0 6px; font-size: 18px; }
+  .formelbox { font: 17px/1.5 "Cambria Math", "STIX Two Math", Cambria, Georgia, serif; background: var(--akzent-hell); color: var(--text);
+               border-left: 4px solid var(--akzent); padding: 8px 14px; border-radius: 6px; margin: 8px 0; overflow-x: auto; }
+  .formelbox.ki { background: var(--warn-hell); border-left-color: var(--warn); }
+  .formel dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 12px; margin: 6px 0 10px; font-size: 14px; }
+  .formel dt { font-family: "Cambria Math", Cambria, Georgia, serif; font-weight: 600; }
+  .formel dd { margin: 0; }
+  .formel .abschnitt-titel { font-weight: 650; margin: 10px 0 2px; font-size: 14px; text-transform: uppercase; letter-spacing: .03em; color: var(--leise); }
+  .ki-kasten { background: var(--warn-hell); border-left: 3px solid var(--warn); padding: 6px 10px; border-radius: 6px; margin: 6px 0; font-size: 14px; }
+  .ki-kasten .marke-ki { color: var(--warn); font-weight: 650; }
+  .rechenbeispiel { border: 1px dashed var(--linie); border-radius: 6px; padding: 8px 12px; margin: 8px 0; }
+  .rechenbeispiel.ki { border-color: var(--warn); }
+  .rechenbeispiel ol { margin: 6px 0; padding-left: 22px; font-variant-numeric: tabular-nums; }
+  .rechenbeispiel ol li[hidden] { display: none; }
+  .rechenbeispiel .ergebnis { font-weight: 650; }
+  .rechner { background: var(--bg); border-radius: 6px; padding: 8px 12px; margin: 10px 0 4px; font-size: 14px; }
+  .rechner label { display: inline-flex; gap: 4px; align-items: center; margin: 3px 12px 3px 0; }
+  .rechner input { width: 92px; padding: 3px 6px; border: 1px solid var(--linie); border-radius: 4px; background: var(--flaeche); color: var(--text); font: inherit; }
+  .rechner input.breit { width: min(100%, 420px); }
+  .rechner output { display: block; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .formel-filter { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; margin: 10px 0 4px; }
+  .formel-filter input { padding: 5px 10px; border: 1px solid var(--linie); border-radius: 6px; background: var(--flaeche); color: var(--text); font: inherit; flex: 0 1 280px; }
+  .formel-inhalt { columns: 2 260px; font-size: 14px; margin: 6px 0 14px; padding-left: 18px; }
+  @media (max-width: 600px) { .formel { padding: 12px; } .formel dl { grid-template-columns: 1fr; } .formel dt { margin-top: 4px; } }
+  /* Review 13.11.2026: Barrierefreiheit und Mobilansicht */
+  header input, select, textarea, .notiz, .filter input[type=search], .formel-filter input, .rechner input, .lernkarte textarea { border-color: var(--feldrand); }
+  .knopf.primaer small { color: inherit; }
+  .formel .chip, .ki-kasten .chip, .rechenbeispiel .chip { white-space: normal; }
+  .sprung { position: absolute; left: -9999px; top: 8px; z-index: 100; background: var(--flaeche); color: var(--akzent); padding: 8px 14px; border: 2px solid var(--akzent); border-radius: 6px; }
+  .sprung:focus { left: 12px; }
+  main:focus { outline: none; }
+  aside .sem { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--leise); margin: 14px 8px 6px; font-weight: 650; }
+  .laedt { color: var(--leise); padding: 20px 0; }
+  .nur-mobil { display: none; }
+  .lk-werkzeug { position: sticky; left: 0; justify-content: flex-end; flex-wrap: wrap; padding: 6px 8px; border-bottom: 1px solid var(--linie); background: var(--flaeche); }
+  .lk-werkzeug .lk-hinweis:first-child { margin-right: auto; }
+  .landkarte:fullscreen .lk-werkzeug, .landkarte.vollbild .lk-werkzeug { position: absolute; top: 8px; right: 8px; left: auto; border: 1px solid var(--linie); border-radius: 6px; }
+  .tipps { margin: 6px 0; padding-left: 20px; }
+  @media (max-width: 900px) {
+    .nur-mobil { display: inline-block; }
+    aside { display: none; } aside.offen { display: block; }
+    header nav a { padding: 6px 0; }
+    .chip { white-space: normal; }
+  }
+</style>
+<link rel="manifest" href="/ph-lernen-7k3q9x/manifest.webmanifest">
+<meta name="theme-color" content="#1f6f5c">
+<link rel="icon" href="/ph-lernen-7k3q9x/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/ph-lernen-7k3q9x/icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="PH-Lerntool">
+<meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+<a class="sprung" href="#haupt" id="sprung">Zum Inhalt springen</a>
+<header>
+  <a class="marke" href="#/">PH-Lerntool</a>
+  <button type="button" class="knopf nur-mobil" id="navi-knopf" aria-expanded="false" aria-controls="navi">Kurse</button>
+  <nav><a href="#/" data-nav="start">Dashboard</a><a href="#/lernen" data-nav="lernen">Lernen</a><a href="#/wissen" data-nav="wissen">Wissen</a><a href="#/formeln" data-nav="formeln">Formeln</a><a href="#/netz" data-nav="netz">Netz</a><a href="#/landkarte" data-nav="landkarte">Landkarte</a><a href="#/bibliothek" data-nav="bibliothek">Bibliothek</a><a href="#/recht" data-nav="recht">Recht</a><a href="#/links" data-nav="links">Quellen &amp; Links</a><a href="#/freigabe" data-nav="freigabe">Freigabe</a></nav>
+  <form id="suchform"><input id="suche" type="search" placeholder="Im Stoff suchen …" aria-label="Im Stoff suchen" autocomplete="off"></form>
+</header>
+<div class="rahmen">
+  <aside id="navi"><p class="leise" style="padding:8px">Lade …</p></aside>
+  <main id="haupt" tabindex="-1"></main>
+</div>
+<div class="zoom" id="zoom"><img alt=""></div>
+<script>window.STATISCH = true; window.STATISCH_BASIS = "/ph-lernen-7k3q9x";</script>
+<script src="/ph-lernen-7k3q9x/app/fsrs.js"></script>
+<script>
+"use strict";
+const ROLLEN = { lerninhalt: "Lerninhalt", literaturliste: "Literaturliste", quelle: "Quelle", datensatz: "Datensatz", pruefung: "Prüfungsfragen",
+  dublette: "Dublette", ausgeschlossen: "ausgeschlossen", eigene_arbeit: "eigene Arbeit" };
+const STATUS = {
+  erreichbar: ["erreichbar", "gruen"], "gesperrt-oder-login": ["gesperrt/Login", "gelb"],
+  "nicht-gefunden": ["nicht gefunden", "rot"], "nicht-erreichbar": ["nicht erreichbar", "rot"],
+  "zu-viele-anfragen": ["zu viele Anfragen", "gelb"], fehler: ["Fehler", "rot"], ungeprueft: ["ungeprüft", ""] };
+const TYPEN = { "rechtstext-ris": "Rechtstext (RIS)", "rechtstext-drittseite": "Rechtstext (Drittseite)", "rechtstext-eu": "Rechtstext (EU)",
+  fachliteratur: "Fachliteratur", international: "international", "amtlich-at": "amtlich (AT)", hochschule: "Hochschule", medien: "Medien", sonstige: "sonstige" };
+const ART = { anklickbar: "Link", text: "URL im Text", "doi-im-text": "DOI im Text", "pmid-im-text": "PMID im Text" };
+
+const HERKUNFT = { dokument: ["wörtlich aus dem Dokument", ""], "dokument-verdichtet": ["verdichtet aus dem Dokument", "blau"], "ki-ergaenzung": ["KI-Ergänzung", "gelb"] };
+const STRUKTUR_STATUS = { "ki-entwurf": "", geprueft: "geprüft", veraltet: "veraltet – Original hat sich geändert" };
+const BIB_TYP = { artikel: "Artikel", buch: "Buch", buchkapitel: "Buchkapitel", bericht: "Bericht", reihe: "Reihe", checkliste: "Checkliste", webseite: "Webseite", sonstiges: "sonstiges" };
+const META_QUELLE = { literaturangabe: "nur Literaturliste", crossref: "Crossref", pubmed: "PubMed" };
+
+let bestand = null;
+const $ = (s) => document.querySelector(s);
+const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const zahl = (n) => Number(n).toLocaleString("de-AT");
+// Statische Fassung (phl export): window.STATISCH wird nur im Export gesetzt. Dann liegen die Antworten der Schnittstelle als Dateien unter /data/,
+// die Suche läuft im Browser, und Originaldateien gibt es nicht.
+const STATISCH = !!window.STATISCH;
+const BASIS = window.STATISCH_BASIS || ""; // Unterpfad, z. B. "/ph-lernen" bei GitHub Pages (ohne Schrägstrich am Ende)
+let suchIndex = null;
+async function sucheStatisch(q) {
+  suchIndex ??= await (await fetch(BASIS + "/data/suchindex.json")).json();
+  const begriffe = q.normalize("NFC").toLowerCase().split(/\s+/).filter((b) => b.length >= 2);
+  if (!begriffe.length) return { anfrage: q, treffer: [] };
+  // wie auf dem Server: jedes Wort an einem Wortanfang („Inzidenz“ findet „Inzidenzrate“, nicht „Koinzidenz“)
+  const muster = begriffe.map((b) => new RegExp("(?<![\\p{L}\\p{N}_])" + b.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "u"));
+  const treffer = [];
+  for (const s of suchIndex) {
+    const text = s.t, klein = text.toLowerCase();
+    const funde = muster.map((m) => m.exec(klein));
+    if (!funde.every(Boolean)) continue;
+    const start = Math.max(0, funde[0].index - 90);
+    treffer.push({ einheit: s.e, kurs: s.k, datei: s.d, seite: s.s, ausschnitt: (start ? "… " : "") + text.slice(start, funde[0].index + 160).replace(/\s+/g, " ").trim() + " …" });
+    if (treffer.length >= 150) break;
+  }
+  return { anfrage: q, treffer };
+}
+function statischeUrl(url) {
+  const u = new URL(url, location.origin);
+  if (u.pathname.startsWith("/api/einheit/")) return BASIS + "/data/einheit/" + u.pathname.slice(13) + ".json";
+  return BASIS + "/data/" + u.pathname.slice(5) + ".json";
+}
+const holen = async (url) => {
+  if (STATISCH && url.startsWith("/api/suche")) return sucheStatisch(new URL(url, location.origin).searchParams.get("q") || "");
+  const r = await fetch(STATISCH ? statischeUrl(url) : url);
+  if (!r.ok) throw Object.assign(new Error(`${r.status} bei ${url}`), { status: r.status });
+  return r.json();
+};
+const originalUrl = (pfad, seite) => "/original/" + pfad.split("/").map(encodeURIComponent).join("/") + (seite ? `#page=${seite}` : "");
+const originalLink = (pfad, seite, text) => STATISCH ? "" : `<a href="${originalUrl(pfad, seite)}" target="_blank" rel="noopener">${text}</a>`;
+const statusChip = (p) => { const [t, k] = STATUS[p?.status || "ungeprueft"] || [p?.status, ""]; return `<span class="chip ${k}">${esc(t)}</span>`; };
+const wort = (typ) => typ === "pptx" ? "Folie" : typ === "xlsx" ? "Blatt" : "Seite";
+
+function sichtbar(d) { return ["lerninhalt", "literaturliste", "quelle", "datensatz", "pruefung"].includes(d.rolle) && d.einheit; }
+
+function navigation(aktivId) {
+  const nachSem = new Map();
+  for (const d of bestand.dateien.filter(sichtbar)) {
+    if (!nachSem.has(d.semester_name)) nachSem.set(d.semester_name, new Map());
+    const kurse = nachSem.get(d.semester_name);
+    const name = d.kurs + (d.vortragende.length ? ` (${d.vortragende.join(", ")})` : "");
+    if (!kurse.has(name)) kurse.set(name, []);
+    kurse.get(name).push(d);
+  }
+  let html = "";
+  for (const [sem, kurse] of nachSem) {
+    html += `<p class="sem">${esc(sem)}</p>`;
+    for (const [kurs, liste] of [...kurse].sort((a, b) => a[0].localeCompare(b[0], "de"))) {
+      const offen = liste.some((d) => d.id === aktivId);
+      html += `<details ${offen ? "open" : ""}><summary>${esc(kurs)} <small>${liste.length}</small></summary><ul>`;
+      for (const d of liste.sort((a, b) => a.pfad_anzeige.localeCompare(b.pfad_anzeige, "de"))) {
+        const name = lesbar(d.pfad_anzeige);
+        const st = bestand.struktur?.[d.id];
+        const zusatz = (d.rolle !== "lerninhalt" ? ` <span class="chip">${esc(ROLLEN[d.rolle])}</span>` : "")
+          + (st ? ` <span class="chip ${st === "geprueft" ? "gruen" : st === "veraltet" ? "rot" : "blau"}" title="Gliederung">Gliederung</span>` : "");
+        html += `<li><a href="#/einheit/${encodeURIComponent(d.id)}" class="${d.id === aktivId ? "aktiv" : ""}">${esc(name)}${zusatz}</a></li>`;
+      }
+      html += "</ul></details>";
+    }
+  }
+  $("#navi").innerHTML = html || `<p class="leise" style="padding:8px">Noch keine Einheiten.</p>`;
+}
+
+async function zeigeStart() { return zeigeFortschritt(); }
+
+function fmtDatum(iso) { if (!iso) return "–"; const d = new Date(iso); return isNaN(d) ? iso : d.toLocaleString("de-AT", { dateStyle: "medium", timeStyle: "short" }); }
+
+function gliederung(s, id, w) {
+  const ziel = (n) => `<a href="#/einheit/${encodeURIComponent(id)}/${n}">${n}</a>`;
+  const belege = (seiten) => `<span class="belege leise">(${w === "Folie" ? "Folie" : "S."} ${seiten.map(ziel).join(", ")})</span>`;
+  const herkunft = (a) => {
+    if (a.herkunft === "dokument-verdichtet") return "";  // Normalfall, wird nicht bei jedem Punkt markiert
+    const [t, k] = HERKUNFT[a.herkunft] || [a.herkunft, ""];
+    const zusatz = a.herkunft === "ki-ergaenzung" ? (a.quelle ? ` · Quelle: ${esc(a.quelle)}` : ` · ${esc(a.pruefstatus || "ungeprüft")}`) : "";
+    return ` <span class="chip ${k}">${esc(t)}${zusatz}</span>`;
+  };
+  const ki = (a) => a.herkunft === "ki-ergaenzung" ? "ki" : "";
+  const punkt = (a) => `<li class="${ki(a)}">${esc(a.text)} ${belege(a.seiten)}${herkunft(a)}</li>`;
+  const begriff = (b) => `<li class="${ki(b)}"><strong>${esc(b.begriff)}</strong>: ${esc(b.erklaerung)} ${belege(b.seiten)}${herkunft(b)}</li>`;
+  const st = s.veraltet ? "veraltet" : s.status;
+  let html = `<section class="gliederung"><div class="kopf"><h2>Gliederung</h2>
+    ${STRUKTUR_STATUS[st] ? `<span class="chip ${st === "geprueft" ? "gruen" : "rot"}">${esc(STRUKTUR_STATUS[st])}</span>` : ""}</div>`;
+  if (s.lernziele?.length) html += `<h4>Lernziele</h4><ul>${s.lernziele.map(punkt).join("")}</ul>`;
+  for (const ab of s.abschnitte) {
+    html += `<details><summary>${esc(ab.titel)} <span class="leise">· ${w} ${ziel(ab.von)}${ab.bis !== ab.von ? "–" + ab.bis : ""}</span></summary>
+      ${ab.kernaussagen?.length ? `<h4>Kernaussagen</h4><ul>${ab.kernaussagen.map(punkt).join("")}</ul>` : ""}
+      ${ab.begriffe?.length ? `<h4>Begriffe</h4><ul>${ab.begriffe.map(begriff).join("")}</ul>` : ""}
+      ${ab.uebungen?.length ? `<h4>Übung</h4><ul>${ab.uebungen.map(punkt).join("")}</ul>` : ""}
+      ${ab.nur_bild?.length ? `<p class="leise" style="font-size:13px">Inhalt nur im Bild, hier nicht erfasst: ${w} ${ab.nur_bild.map(ziel).join(", ")}</p>` : ""}
+    </details>`;
+  }
+  if (s.hinweise?.length) html += `<h4>Hinweise</h4><ul>${s.hinweise.map(punkt).join("")}</ul>`;
+  return html + "</section>";
+}
+
+async function zeigeEinheit(id, seite) {
+  const [e, recht] = await Promise.all([holen("/api/einheit/" + encodeURIComponent(id)), ladeRecht().catch(() => null)]);
+  const d = e.eintrag, w = wort(d.typ);
+  document.title = d.pfad_anzeige.split("/").pop() + " – PH-Lerntool";
+  let html = `<h1>${esc(lesbar(d.pfad_anzeige))}</h1>
+    <div class="meta">
+      <span>${esc(d.kurs)}${d.vortragende.length ? " · " + esc(d.vortragende.join(", ")) : ""}</span>
+      <span>${esc(d.semester_name)}</span><span class="chip">${esc(ROLLEN[d.rolle])}</span>
+      <span>${d.seiten} ${w === "Folie" ? "Folien" : w === "Blatt" ? "Blätter" : "Seiten"}</span>
+      <span>Sprache: ${esc({ de: "Deutsch", en: "Englisch" }[d.sprache] || d.sprache)}</span>
+      ${d.textarme_seiten?.length ? `<span class="chip gelb" title="Seiten mit kaum Text, meist Abbildungen. Ihr Inhalt steht nur im Seitenbild.">${d.textarme_seiten.length} ${w === "Folie" ? "Folien" : "Seiten"} fast nur Bild</span>` : ""}
+      ${originalLink(d.pfad, null, "Original öffnen")}
+    </div>
+    ${recht ? rechtsquellenKasten(recht, id) : ""}
+    ${e.struktur ? gliederung(e.struktur, id, w) : ""}
+    <div class="springen"><label for="sprung">Zu ${w}</label><input id="sprung" type="number" min="1" max="${d.seiten}"></div>`;
+  for (const s of e.seiten) {
+    html += `<section class="seite ${s.bild ? "" : "ohne-bild"}" id="s${s.nr}">
+      <div class="kopf"><h2>${w} ${s.nr}</h2>
+        <span class="herkunft">Herkunft: ${esc(d.pfad_anzeige)}, ${w} ${s.nr}${STATISCH ? "" : " · " + originalLink(d.pfad, s.nr, "im Original")}</span></div>
+      <div class="inhalt"><div>
+        ${s.textarm ? `<div class="hinweis">Kaum Text auf dieser ${w} (vermutlich Abbildung). Der Inhalt ist hier nicht als Text erfasst, siehe Seitenbild.</div>` : ""}
+        ${s.text ? `<div class="text">${esc(s.text)}</div>` : ""}
+        ${s.notizen ? `<div class="notizen"><strong>Notizen:</strong>\n${esc(s.notizen)}</div>` : ""}
+        ${s.links.length ? `<ul class="linkliste">${s.links.map((l) => `<li>${statusChip(l.pruefung)}<a href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">${esc(l.url)}</a><span class="leise">${esc(ART[l.art] || l.art)}</span>${l.pruefung?.webarchiv ? `<a href="${esc(l.pruefung.webarchiv)}" target="_blank" rel="noopener noreferrer">Archiv</a>` : ""}</li>`).join("")}</ul>` : ""}
+      </div>
+      ${s.bild ? `<div><img loading="lazy" src="${esc(s.bild)}" alt="${w} ${s.nr}"></div>` : ""}
+      </div></section>`;
+  }
+  $("#haupt").innerHTML = html;
+  $("#sprung").addEventListener("change", (ev) => { const n = ev.target.value; location.hash = `#/einheit/${encodeURIComponent(id)}/${n}`; });
+  if (seite) document.getElementById("s" + seite)?.scrollIntoView();
+  else window.scrollTo(0, 0);
+}
+
+function lizenzKurz(url) {
+  const m = /creativecommons\.org\/licenses\/([^/]+)\/([^/]+)/.exec(url || "");
+  return m ? `CC ${m[1].toUpperCase()} ${m[2]}` : "Lizenz";
+}
+
+async function zeigeBibliothek() {
+  const [b, n] = await Promise.all([holen("/api/bibliothek"), ladeNetz()]);
+  const namen = Object.fromEntries(bestand.dateien.map((d) => [d.id, d.pfad_anzeige.split("/").pop()]));
+  const konzepteZu = (id) => n.literatur.filter((l) => l.bibliothek === id && l.status !== "abgelehnt").map((l) =>
+    `<a class="chip ${l.herkunft === "vorschlag" ? "vorschlag" : l.status === "geprueft" ? "gruen" : ""}" href="#/netz/${encodeURIComponent(l.konzept)}"
+       title="${esc((LIT_ART[l.art] || l.art) + " · " + (l.herkunft === "vorschlag" ? "Vorschlag (KI-Ergänzung): " + l.begruendung : "aus dem Dokument"))}">${esc(n.konzeptNamen[l.konzept] || l.konzept)}</a>`).join(" ");
+  const zeilen = b.eintraege.map((e) => {
+    const m = e.metadaten || {};
+    const autor = e.autor_innen?.length ? e.autor_innen.join(", ") : "";
+    const zugang = [
+      e.doi ? `<a href="https://doi.org/${esc(e.doi)}" target="_blank" rel="noopener noreferrer">DOI</a>` : e.url ? `<a href="${esc(e.url)}" target="_blank" rel="noopener noreferrer">Link</a>` : "",
+      e.datei_lokal && !STATISCH ? originalLink(e.datei_lokal, null, "lokale Datei") : "",
+      e.lizenz ? `<span class="chip gruen" title="${esc(e.lizenz)}">${esc(lizenzKurz(e.lizenz))}</span>` : "",
+    ].filter(Boolean).join(" · ");
+    return `<tr><td><strong>${esc(e.titel)}</strong><div>${esc(autor)}${e.jahr ? ` (${e.jahr})` : ""}${e.erschienen_in ? ` · ${esc(e.erschienen_in)}` : ""}</div>
+        <div class="angabe">Angabe in der Liste: ${esc(e.angabe_original)}</div></td>
+      <td>${esc(BIB_TYP[e.typ] || e.typ)}</td>
+      <td>${konzepteZu(e.id) || "–"}</td>
+      <td>${zugang || "–"}</td>
+      <td><span class="chip ${m.quelle === "literaturangabe" ? "" : "blau"}">${esc(META_QUELLE[m.quelle] || m.quelle)}</span>${m.abgerufen_am ? ` <span class="leise">${esc(m.abgerufen_am)}</span>` : ""}
+        ${m.abweichungen?.length ? `<ul>${m.abweichungen.map((a) => `<li>${esc(a)}</li>`).join("")}</ul>` : ""}
+        ${m.hinweis ? `<div class="angabe">${esc(m.hinweis)}</div>` : ""}</td>
+      <td>${e.fundstellen.map((f) => `<a href="#/einheit/${encodeURIComponent(f.einheit)}/${f.seite}">${esc(namen[f.einheit] || f.datei)}, S. ${f.seite}, Nr. ${esc(f.nr)}</a><div class="leise" style="font-size:13px">${esc(f.abschnitt || "")}</div>`).join("")}</td></tr>`;
+  }).join("");
+  const abw = b.eintraege.filter((e) => e.metadaten?.abweichungen?.length).length;
+  $("#haupt").innerHTML = `<h1>Bibliothek</h1>
+    <p class="leise">Spalte „Konzepte“: verknüpfte Begriffe aus dem <a href="#/netz">Wissensnetz</a>.</p>
+    <div class="aktionen" style="margin-bottom:14px"><a class="knopf" href="/ph-lernen-7k3q9x/data/zotero-export.json" download="ph-lerntool-bibliothek.json">Für Zotero exportieren (CSL-JSON)</a></div>
+    ${b.eintraege.length ? `<div class="rollen"><table class="bib"><thead><tr><th>Werk</th><th>Typ</th><th>Konzepte</th><th>Zugang</th><th>Metadaten</th><th>Fundstelle</th></tr></thead><tbody>${zeilen}</tbody></table></div>` : "<p>Noch keine Einträge.</p>"}`;
+}
+
+let rechtCache = null;
+async function ladeRecht() { return rechtCache ??= await holen("/api/recht"); }
+const RIS_NENNUNG = "Quelle: RIS, Bundeskanzleramt (CC BY 4.0)";
+function normTitel(v) {
+  const n = v.norm;
+  return v.abschnitt ? `${v.abschnitt.typ === "Paragraph" ? "§" : "Art."} ${v.abschnitt.nr} ${n?.gesetz.abkuerzung || v.gesetz}` : (n?.gesetz.abkuerzung || v.gesetz);
+}
+function fundstellenLinks(fund) {
+  const namen = Object.fromEntries(bestand.dateien.map((d) => [d.id, d.pfad_anzeige.split("/").pop().replace(/\.[^.]+$/, "")]));
+  return fund.map((f) => `${esc(namen[f.einheit] || f.einheit)}: ${f.seiten.map((s) => `<a href="#/einheit/${encodeURIComponent(f.einheit)}/${s}">${s}</a>`).join(", ")}`).join(" · ");
+}
+
+async function zeigeRecht(zielId) {
+  const r = await ladeRecht();
+  document.title = "Recht – PH-Lerntool";
+  const gruppen = new Map();
+  for (const v of r.verweise) {
+    const k = v.im_ris ? (v.norm?.gesetz.kurztitel || v.gesetz) : "Nicht im RIS (kein österreichisches Bundesrecht)";
+    if (!gruppen.has(k)) gruppen.set(k, []);
+    gruppen.get(k).push(v);
+  }
+  const karte = (v) => {
+    const n = v.norm;
+    let h = `<div class="norm" id="r-${esc(v.id)}"><h3>${esc(normTitel(v))}${n?.ueberschrift ? ` <span class="leise" style="font-weight:normal">· ${esc(n.ueberschrift)}</span>` : ""}</h3>`;
+    if (n?.gliederung?.length) h += `<div class="gl leise">${esc(n.gliederung.join(" · "))}</div>`;
+    if (v.hinweis) h += `<p class="leise">${esc(v.hinweis)}</p>`;
+    if (n?.absaetze) h += n.absaetze.map((a) => `<p class="${a.startsWith("  ") ? "listelem" : ""}">${esc(a.trim())}</p>`).join("");
+    else if (v.im_ris && n) h += `<p class="leise">Ganzes Gesetz: hier nur Angaben und Link, kein Text.</p>`;
+    else if (v.im_ris) h += `<p class="hinweis">Noch nicht aus dem RIS abgerufen (<code>phl ris abrufen</code>).</p>`;
+    const angaben = [];
+    if (n) {
+      angaben.push(`Fassung vom ${esc(n.fassung_vom)}`);
+      if (n.inkrafttreten) angaben.push(`in Kraft seit ${esc(n.inkrafttreten)}`);
+      if (n.ausserkrafttreten) angaben.push(`außer Kraft ab ${esc(n.ausserkrafttreten)}`);
+      if (n.kundmachungsorgan) angaben.push(esc(n.kundmachungsorgan.trim()));
+      const link = n.eli || n.gesetz.geltende_fassung_url;
+      if (link) angaben.push(`<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">im RIS öffnen</a>`);
+      if (n.eli && n.gesetz.geltende_fassung_url) angaben.push(`<a href="${esc(n.gesetz.geltende_fassung_url)}" target="_blank" rel="noopener noreferrer">ganzes Gesetz</a>`);
+    }
+    if (angaben.length) h += `<div class="belege leise">${angaben.join(" · ")}</div>`;
+    h += `<div class="belege leise">In den Unterlagen: ${fundstellenLinks(v.fundstellen)}</div>`;
+    return h + "</div>";
+  };
+  let html = `<h1>Recht</h1>
+    <p class="leise">Gesetzesstellen, die in den Unterlagen vorkommen. Die Texte stammen unverändert aus dem RIS${r.fassung_vom ? `, Fassung vom ${esc(r.fassung_vom)}, abgerufen ${esc(fmtDatum(r.abgerufen_am))}` : ""}. Verbindlich ist nur die Kundmachung im Bundesgesetzblatt.<br>${RIS_NENNUNG}</p>`;
+  for (const [titel, liste] of gruppen) html += `<h2>${esc(titel)}</h2>${liste.map(karte).join("")}`;
+  if (!r.verweise.length) html += `<p>Noch keine Verweise (<code>recht/verweise.json</code>).</p>`;
+  $("#haupt").innerHTML = html;
+  const ziel = zielId && document.getElementById("r-" + zielId);
+  if (ziel) { ziel.classList.add("ziel"); ziel.scrollIntoView(); } else window.scrollTo(0, 0);
+}
+
+function rechtsquellenKasten(r, einheitId) {
+  const treffer = r.verweise.filter((v) => v.fundstellen.some((f) => f.einheit === einheitId));
+  if (!treffer.length) return "";
+  const zeile = (v) => {
+    const seiten = v.fundstellen.filter((f) => f.einheit === einheitId).flatMap((f) => f.seiten);
+    const titel = v.norm?.ueberschrift ? ` · ${esc(v.norm.ueberschrift)}` : "";
+    return `<li><a href="#/recht/${encodeURIComponent(v.id)}">${esc(normTitel(v))}</a>${titel} <span class="belege leise">(S. ${seiten.map((s) => `<a href="#/einheit/${encodeURIComponent(einheitId)}/${s}">${s}</a>`).join(", ")})</span>${v.im_ris ? "" : ' <span class="chip">nicht im RIS</span>'}</li>`;
+  };
+  return `<section class="rechtsquellen"><strong>Rechtsquellen</strong> <span class="leise">· Text aus dem RIS${r.fassung_vom ? `, Fassung vom ${esc(r.fassung_vom)}` : ""}</span><ul>${treffer.map(zeile).join("")}</ul></section>`;
+}
+
+// ---------- Formelsammlung (#/formeln) ----------
+// Lernfunktion: ausgearbeitete Beispiele mit schrittweise aufdeckbarem Rechenweg, Begründung in docs/LERNDESIGN.md.
+let formelCache = null;
+let formelFilter = { bereich: "", q: "" };
+const fz = (x, stellen = 3) => Number.isFinite(x) ? x.toLocaleString("de-AT", { maximumFractionDigits: stellen }) : "–";
+const prozent = (x, stellen = 1) => Number.isFinite(x) ? fz(x * 100, stellen) + " %" : "–";
+
+function aussageKasten(a, titel) {
+  if (!a) return "";
+  if (a.herkunft !== "ki-ergaenzung") return `<p>${titel ? `<strong>${esc(titel)}:</strong> ` : ""}${esc(a.text)}</p>`;
+  const angabe = [a.quelle ? `Quelle: ${esc(a.quelle)}` : "", a.pruefstatus === "ungeprueft" ? "ungeprüft" : ""].filter(Boolean).join(" · ");
+  return `<div class="ki-kasten"><span class="marke-ki">KI-Ergänzung${titel ? ` · ${esc(titel)}` : ""}:</span> ${esc(a.text)}${angabe ? ` <span class="leise">(${angabe})</span>` : ""}</div>`;
+}
+
+function rechenbeispiel(b, fid, i) {
+  const ki = b.herkunft === "ki-ergaenzung";
+  const id = `rb-${fid}-${i}`;
+  const herkunft = ki ? `<span class="chip gelb">KI-Ergänzung${b.quelle ? ": " + esc(b.quelle) : ""}${b.pruefstatus === "ungeprueft" ? " · ungeprüft" : ""}</span>`
+    : b.beleg ? `<span class="belege leise">Folie: ${fundstellenLinks([b.beleg])}</span>` : "";
+  return `<div class="rechenbeispiel${ki ? " ki" : ""}" id="${id}">
+    <div><strong>${esc(b.titel)}</strong> ${herkunft}</div>
+    <div><span class="leise">Gegeben:</span> ${esc(b.gegeben)}</div>
+    <p class="leise" style="font-size:13px;margin:4px 0">Erst selbst rechnen, dann Schritt für Schritt vergleichen.</p>
+    <ol>${b.schritte.map((s) => `<li hidden>${esc(s)}</li>`).join("")}</ol>
+    <div class="loesung" hidden><div class="ergebnis">Ergebnis: ${esc(b.ergebnis)}</div>${b.deutung ? `<div><span class="leise">Deutung:</span> ${esc(b.deutung)}</div>` : ""}</div>
+    <div class="aktionen" style="margin-top:6px"><button class="knopf" data-schritt="${id}">Nächster Schritt</button> <button class="knopf" data-alles="${id}">Ganzen Rechenweg zeigen</button></div>
+  </div>`;
+}
+
+const RECHNER = {
+  anteil: { felder: [["z", "Fälle (Zähler)", 50], ["n", "Personen (Nenner)", 5000]],
+    rechne: (v) => `Anteil = ${fz(v.z)} / ${fz(v.n)} = ${fz(v.z / v.n, 5)} = ${prozent(v.z / v.n, 2)}` },
+  rate: { felder: [["f", "neue Fälle", 5], ["pz", "Personenzeit (Jahre)", 25], ["pro", "pro … Personenjahre", 100]],
+    rechne: (v) => `Rate = ${fz(v.f)} / ${fz(v.pz)} = ${fz(v.f / v.pz, 5)} pro Personenjahr = ${fz(v.f / v.pz * v.pro, 2)} pro ${fz(v.pro)} Personenjahre` },
+  raten: { felder: [["f1", "Fälle exponiert", 58], ["pz1", "Personenjahre exponiert", 12559], ["f0", "Fälle nicht exponiert", 925], ["pz0", "Personenjahre nicht exponiert", 298815]],
+    rechne: (v) => { const r1 = v.f1 / v.pz1, r0 = v.f0 / v.pz0;
+      return `Rate exponiert = ${fz(r1 * 1000, 2)} pro 1000 PJ · Rate nicht exponiert = ${fz(r0 * 1000, 2)} pro 1000 PJ · Rate Ratio = ${fz(r1 / r0, 2)}`; } },
+  vierfelder: { felder: [["a", "a: exponiert, krank (Fälle)", 20], ["b", "b: exponiert, gesund (Kontrollen)", 980], ["c", "c: nicht exponiert, krank", 30], ["d", "d: nicht exponiert, gesund", 3970]],
+    rechne: (v) => { const r1 = v.a / (v.a + v.b), r0 = v.c / (v.c + v.d);
+      return `Risiko exponiert = a/(a+b) = ${prozent(r1, 2)} · Risiko nicht exponiert = c/(c+d) = ${prozent(r0, 2)} · RR = ${fz(r1 / r0, 2)} · OR = ad/bc = ${fz((v.a * v.d) / (v.b * v.c), 2)}<br><span class="leise">RR nur bei Kohortendaten sinnvoll, in der Fall-Kontroll-Studie nur das OR.</span>`; } },
+  nnt: { felder: [["rk", "Ereignisrate Kontrolle (%)", 4], ["rt", "Ereignisrate Therapie (%)", 3]],
+    rechne: (v) => { const arr = v.rk - v.rt;
+      return `ARR = ${fz(arr, 2)} % · RRR = ${fz(arr / v.rk * 100, 1)} % · NNT = 100 / ${fz(arr, 2)} = ${fz(100 / arr, 1)}${arr > 0 ? ` (aufgerundet ${Math.ceil(100 / arr - 1e-9)})` : ""}`; } },
+  paf: { felder: [["p", "Anteil Exponierte (0–1)", 0.3], ["rr", "relatives Risiko", 2]],
+    rechne: (v) => { const x = v.p * (v.rr - 1); return `PAF = ${fz(x, 3)} / (1 + ${fz(x, 3)}) = ${prozent(x / (1 + x), 1)}`; } },
+  alpha: { felder: [["a", "α je Test", 0.05], ["k", "Zahl der Tests", 3]],
+    rechne: (v) => `1 − (1 − ${fz(v.a)})^${fz(v.k)} = ${prozent(1 - Math.pow(1 - v.a, v.k), 1)} · Bonferroni: je Test α = ${fz(v.a / v.k, 4)}` },
+  icer: { felder: [["c1", "Kosten neu", 2872], ["e1", "Effekt neu (QALYs)", 6.74], ["c2", "Kosten Vergleich", 1331], ["e2", "Effekt Vergleich (QALYs)", 6.69]],
+    rechne: (v) => { const dc = v.c1 - v.c2, de = v.e1 - v.e2;
+      const q = dc >= 0 ? (de >= 0 ? "NE: teurer und wirksamer, der Schwellenwert entscheidet" : "NW: teurer und weniger wirksam, die bisherige Behandlung dominiert")
+        : (de >= 0 ? "SE: billiger und wirksamer, die neue Behandlung dominiert" : "SW: billiger, aber weniger wirksam");
+      return `ΔKosten = ${fz(dc, 2)} · ΔEffekt = ${fz(de, 3)} · ICER = ${de ? fz(dc / de, 0) : "–"} pro QALY<br><span class="leise">Quadrant ${q}.</span>`; } },
+  deskriptiv: { text: ["x", "Werte (durch Leerzeichen oder Strichpunkt getrennt)", "22 40 53 57 93 98 103 108 116 121 234"],
+    rechne: (_, roh) => {
+      const x = roh.split(/[\s;]+/).map((s) => Number(s.replace(",", "."))).filter(Number.isFinite);
+      if (!x.length) return "Bitte Zahlen eingeben.";
+      const n = x.length, s = [...x].sort((p, q) => p - q), summe = x.reduce((p, q) => p + q, 0), m = summe / n;
+      const med = n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2;
+      const zaehl = new Map(); x.forEach((w) => zaehl.set(w, (zaehl.get(w) || 0) + 1));
+      const max = Math.max(...zaehl.values()); const modus = max > 1 ? [...zaehl].filter(([, c]) => c === max).map(([w]) => fz(w)).join(", ") : "kein Wert kommt öfter vor";
+      const ss = x.reduce((p, w) => p + (w - m) ** 2, 0);
+      return `geordnet: ${s.map((w) => fz(w)).join(", ")}<br>n = ${n} · Summe = ${fz(summe)} · Mittelwert = ${fz(m, 2)} · Median = ${fz(med, 2)} · Modus: ${modus}<br>Minimum ${fz(s[0])} · Maximum ${fz(s[n - 1])} · Spannweite ${fz(s[n - 1] - s[0])}${n > 1 ? `<br>Quadratsumme SS = ${fz(ss, 2)} · Varianz s² = SS/(n − 1) = ${fz(ss / (n - 1), 2)} · Standardabweichung s = ${fz(Math.sqrt(ss / (n - 1)), 2)}` : ""}`;
+    } },
+};
+
+// Startwerte je Formel aus deren Folienbeispiel (sonst die Standardwerte des Rechners)
+const RECHNER_START = { praevalenz: { z: 86, n: 2181 }, "odds-ratio": { a: 597, b: 666, c: 8, d: 114 } };
+function rechnerHtml(typ, fid) {
+  const r = RECHNER[typ];
+  if (!r) return "";
+  const start = RECHNER_START[fid] || {};
+  const felder = r.text ? `<label style="display:flex;flex-wrap:wrap">${esc(r.text[1])} <input class="breit" data-feld="${r.text[0]}" value="${esc(r.text[2])}"></label>`
+    : r.felder.map(([k, t, w]) => `<label>${esc(t)} <input type="number" step="any" data-feld="${k}" value="${start[k] ?? w}"></label>`).join("");
+  return `<div class="rechner" data-rechner="${typ}" id="rr-${fid}"><strong>Selbst rechnen</strong> <span class="leise">(rechnet nur mit der Formel oben; Startwerte aus dem Beispiel)</span><div>${felder}</div><output></output></div>`;
+}
+
+function rechne(el) {
+  const r = RECHNER[el.dataset.rechner];
+  const werte = {}; let roh = "";
+  el.querySelectorAll("input").forEach((i) => { werte[i.dataset.feld] = Number(i.value); roh = i.value; });
+  try { el.querySelector("output").innerHTML = r.rechne(werte, roh); } catch { el.querySelector("output").textContent = "–"; }
+}
+
+function formelKarte(f, bereichName, alle) {
+  const ki = f.formel_herkunft === "ki-ergaenzung";
+  const titelVon = Object.fromEntries(alle.map((x) => [x.id, x.titel]));
+  const namen = netzCacheFormeln?.konzeptNamen || {};
+  let h = `<div class="formel" id="f-${esc(f.id)}" data-bereich="${esc(f.bereich)}">
+    <h3>${esc(f.titel)} <span class="chip">${esc(bereichName)}</span></h3>
+    <div class="formelbox${ki ? " ki" : ""}">${esc(f.formel)}</div>
+    ${ki ? `<div class="ki-kasten"><span class="marke-ki">KI-Ergänzung:</span> Die Folien zeigen das Prinzip, aber nicht diese Formel. Quelle siehe unten.</div>` : ""}`;
+  if (f.variablen.length) h += `<dl>${f.variablen.map((v) => `<dt>${esc(v.zeichen)}</dt><dd>${esc(v.bedeutung)}</dd>`).join("")}</dl>`;
+  h += `<div class="abschnitt-titel">Wofür</div>${aussageKasten(f.wozu)}`;
+  if (f.erklaerung) h += `<div class="abschnitt-titel">Erklärung</div>${aussageKasten(f.erklaerung)}`;
+  if (f.beispiele?.length) h += `<div class="abschnitt-titel">Rechenweg</div>${f.beispiele.map((b, i) => rechenbeispiel(b, f.id, i)).join("")}`;
+  if (f.hinweise?.length) h += `<div class="abschnitt-titel">Achtung</div>${f.hinweise.map((a) => aussageKasten(a, "Hinweis")).join("")}`;
+  if (f.ergaenzungen?.length) h += f.ergaenzungen.map((a) => aussageKasten(a)).join("");
+  if (f.rechner) h += rechnerHtml(f.rechner, f.id);
+  const zusatz = [];
+  if (f.konzepte.length) zusatz.push(`Konzepte: ${f.konzepte.map((k) => `<a class="chip blau" href="#/netz/${encodeURIComponent(k)}">${esc(namen[k] || k)}</a>`).join(" ")}`);
+  if (f.verwandt?.length) zusatz.push(`Siehe auch: ${f.verwandt.map((v) => `<a href="#/formeln/${encodeURIComponent(v)}">${esc(titelVon[v] || v)}</a>`).join(", ")}`);
+  zusatz.push(`Folien: ${fundstellenLinks(f.belege)}`);
+  return h + zusatz.map((z) => `<div class="belege leise" style="margin-top:4px">${z}</div>`).join("") + "</div>";
+}
+
+let netzCacheFormeln = null;
+async function zeigeFormeln(zielId) {
+  const daten = formelCache ??= await holen("/api/formeln");
+  try { netzCacheFormeln ??= await ladeNetz(); } catch { netzCacheFormeln = null; }
+  document.title = "Formeln – PH-Lerntool";
+  const bereiche = Object.fromEntries(daten.bereiche.map((b) => [b.id, b.name]));
+  const passt = (f) => {
+    if (formelFilter.bereich && f.bereich !== formelFilter.bereich) return false;
+    if (!formelFilter.q) return true;
+    const q = formelFilter.q.toLocaleLowerCase("de");
+    return [f.titel, f.formel, f.wozu.text, f.erklaerung?.text, ...f.variablen.map((v) => v.bedeutung)].join(" ").toLocaleLowerCase("de").includes(q);
+  };
+  if (zielId) formelFilter = { bereich: "", q: "" };
+  const render = () => {
+    const liste = daten.formeln.filter(passt);
+    let html = "";
+    for (const b of daten.bereiche) {
+      const teil = liste.filter((f) => f.bereich === b.id);
+      if (teil.length) html += `<h2>${esc(b.name)}</h2>${teil.map((f) => formelKarte(f, b.name, daten.formeln)).join("")}`;
+    }
+    $("#formel-liste").innerHTML = html || "<p>Keine Formel passt zum Filter.</p>";
+    $("#formel-anzahl").textContent = `${liste.length} von ${daten.formeln.length} Formeln`;
+    $("#formel-liste").querySelectorAll("[data-rechner]").forEach(rechne);
+    document.querySelectorAll(".formel-filter [data-bereich]").forEach((k) => k.classList.toggle("an-gruen", k.dataset.bereich === formelFilter.bereich));
+  };
+  const inhalt = daten.bereiche.map((b) => `<li><strong>${esc(b.name)}</strong>: ${daten.formeln.filter((f) => f.bereich === b.id).map((f) => `<a href="#/formeln/${encodeURIComponent(f.id)}">${esc(f.titel)}</a>`).join(" · ")}</li>`).join("");
+  $("#haupt").innerHTML = `<h1>Formeln &amp; Rechnungen</h1>
+    <p class="leise">Alle Formeln und Rechenbeispiele aus den Unterlagen zu Epidemiologie, klinischen Studien, Statistik und Gesundheitsökonomie, dazu Umwelt und Finanzierung. Zu jeder Formel: wofür man sie braucht, die Erklärung, der Rechenweg Schritt für Schritt und die Folien. Was nicht auf den Folien steht, ist gelb als „KI-Ergänzung“ markiert.</p>
+    <ul class="formel-inhalt">${inhalt}</ul>
+    <div class="formel-filter"><button class="knopf" data-bereich="">Alle</button>${daten.bereiche.map((b) => `<button class="knopf" data-bereich="${esc(b.id)}">${esc(b.name)}</button>`).join("")}
+      <input type="search" id="formel-suche" placeholder="In Formeln suchen …" value="${esc(formelFilter.q)}" aria-label="In Formeln suchen"> <span class="leise" id="formel-anzahl"></span></div>
+    <div id="formel-liste"></div>`;
+  render();
+  document.querySelectorAll(".formel-filter [data-bereich]").forEach((k) => k.addEventListener("click", () => { formelFilter.bereich = k.dataset.bereich; render(); }));
+  $("#formel-suche").addEventListener("input", (ev) => { formelFilter.q = ev.target.value.trim(); render(); });
+  const liste = $("#formel-liste");
+  liste.addEventListener("click", (ev) => {
+    const schritt = ev.target.closest("[data-schritt]"), alles = ev.target.closest("[data-alles]");
+    const box = (schritt || alles) && document.getElementById((schritt || alles).dataset.schritt || alles.dataset.alles);
+    if (!box) return;
+    const offen = [...box.querySelectorAll("ol li[hidden]")];
+    (alles ? offen : offen.slice(0, 1)).forEach((li) => { li.hidden = false; });
+    if (alles || offen.length <= 1) { box.querySelector(".loesung").hidden = false; box.querySelector(".aktionen").hidden = true; }
+  });
+  liste.addEventListener("input", (ev) => { const r = ev.target.closest("[data-rechner]"); if (r) rechne(r); });
+  const ziel = zielId && document.getElementById("f-" + zielId);
+  if (ziel) { ziel.classList.add("ziel"); ziel.scrollIntoView(); } else window.scrollTo(0, 0);
+}
+
+let linkFilter = { status: "", typ: "", kurs: "" };
+async function zeigeLinks() {
+  const daten = await holen("/api/links");
+  const alle = daten.links;
+  const kurse = [...new Set(alle.flatMap((l) => l.fundstellen.map((f) => f.kurs)))].sort((a, b) => a.localeCompare(b, "de"));
+  const opt = (werte, aktiv, beschr) => werte.map((v) => `<option value="${esc(v)}" ${v === aktiv ? "selected" : ""}>${esc(beschr ? beschr(v) : v)}</option>`).join("");
+  const render = () => {
+    const liste = alle.filter((l) => (!linkFilter.status || (l.pruefung?.status || "ungeprueft") === linkFilter.status)
+      && (!linkFilter.typ || l.typ === linkFilter.typ) && (!linkFilter.kurs || l.fundstellen.some((f) => f.kurs === linkFilter.kurs)));
+    const namen = Object.fromEntries(bestand.dateien.map((d) => [d.id, d.pfad_anzeige.split("/").pop()]));
+    $("#linktabelle").innerHTML = `<p class="leise">${liste.length} von ${alle.length} Links</p>
+      <div class="rollen"><table><thead><tr><th>Link</th><th>Typ</th><th>Status</th><th>Fundstellen</th></tr></thead><tbody>
+      ${liste.map((l) => `<tr><td><a href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">${esc(l.url)}</a>
+          ${l.pruefung?.webarchiv ? `<br><a href="${esc(l.pruefung.webarchiv)}" target="_blank" rel="noopener noreferrer" class="leise">Web-Archiv</a>` : ""}</td>
+        <td>${esc(TYPEN[l.typ] || l.typ)}</td>
+        <td>${statusChip(l.pruefung)}${l.pruefung?.http ? ` <span class="leise">${l.pruefung.http}</span>` : ""}</td>
+        <td>${l.fundstellen.map((f) => `<a href="#/einheit/${encodeURIComponent(f.einheit)}/${f.seite}">${esc(namen[f.einheit] || f.datei)}, S. ${f.seite}</a>`).join("<br>")}</td></tr>`).join("")}
+      </tbody></table></div>`;
+  };
+  $("#haupt").innerHTML = `<h1>Quellen &amp; Links</h1>
+    <div class="filter">
+      <select id="f-status" aria-label="Status"><option value="">alle Status</option>${opt(Object.keys(STATUS), linkFilter.status, (v) => STATUS[v][0])}</select>
+      <select id="f-typ" aria-label="Typ"><option value="">alle Typen</option>${opt(Object.keys(TYPEN), linkFilter.typ, (v) => TYPEN[v])}</select>
+      <select id="f-kurs" aria-label="Kurs"><option value="">alle Kurse</option>${opt(kurse, linkFilter.kurs)}</select>
+    </div><div id="linktabelle"></div>`;
+  for (const k of ["status", "typ", "kurs"]) $("#f-" + k).addEventListener("change", (ev) => { linkFilter[k] = ev.target.value; render(); });
+  render();
+}
+
+/* ---------- Wissensnetz, Wissensdatenbank, Freigabe ---------- */
+const BEZ = { "ist-art-von": "ist eine Art von", "ist-teil-von": "ist Teil von", "ist-form-von": "ist eine Form von",
+  "ist-methode-fuer": "ist Methode für", "ist-ergebnismass-von": "ist Ergebnismaß von", nutzt: "nutzt", "liefert-daten-fuer": "liefert Daten für",
+  "ist-alternative-zu": "ist Alternative zu", "wird-verglichen-mit": "wird verglichen mit", veranschaulicht: "veranschaulicht", bestimmt: "bestimmt",
+  beeinflusst: "beeinflusst", "steht-in-spannung-zu": "steht in Spannung zu", "ist-voraussetzung-fuer": "ist Voraussetzung für", begruendet: "begründet",
+  bewertet: "bewertet", "verwandt-mit": "ist verwandt mit", "ist-beispiel-fuer": "ist Beispiel für", "ist-ansatz-fuer": "ist Ansatz für" };
+const LIT_ART = { behandelt: "behandelt", "ist-beispiel-fuer": "ist Beispiel für", "ist-werkzeug-fuer": "ist Werkzeug für" };
+const N_STATUS = { "ki-entwurf": ["", ""], geprueft: ["geprüft", "gruen"], abgelehnt: ["abgelehnt", "rot"], veraltet: ["veraltet", "rot"] };
+const W_ART = { konzept: "Konzept", lernziel: "Lernziel", kernaussage: "Kernaussage", begriff: "Begriff", uebung: "Übung", hinweis: "Hinweis", literatur: "Literatur" };
+const W_HERKUNFT = { dokument: ["aus dem Dokument", ""], "dokument-verdichtet": ["verdichtet aus dem Dokument", "blau"],
+  "ki-ergaenzung": ["KI-Ergänzung", "gelb"], vorschlag: ["Vorschlag · KI-Ergänzung", "vorschlag"],
+  pruefungsblatt: ["Prüfungsfrage (vom Blatt abgeschrieben)", "gruen"] };
+const TYP_NAME = { konzepte: "Konzept", beziehungen: "Beziehung", literatur: "Literaturverknüpfung", fragen: "Lernfrage" };
+
+const herkunftChip = (h, x) => {
+  const [t, k] = W_HERKUNFT[h] || [h, ""];
+  const z = h === "ki-ergaenzung" ? (x?.quelle ? ` · Quelle: ${x.quelle}` : ` · ${x?.pruefstatus || "ungeprüft"}`) : "";
+  return `<span class="chip ${k}${z.length > 20 ? " lang" : ""}">${esc(t + z)}</span>`;
+};
+const statusChipN = (s) => { const [t, k] = N_STATUS[s] || [s, ""]; if (!t) return ""; return `<span class="chip ${k}">${esc(t)}</span>`; };
+// Anzeigename aus dem Dateinamen: ohne Endung, Unterstriche als Leerzeichen (nichts dazuerfunden).
+const lesbar = (pfad) => pfad.split("/").pop().replace(/\.[^.]+$/, "").replace(/_+/g, " ").replace(/\s+/g, " ").trim();
+const kurzName = (id) => lesbar(bestand.dateien.find((d) => d.id === id)?.pfad_anzeige || id);
+const belegLinks = (belege, neuerTab) => (belege || []).map((b) => `${esc(kurzName(b.einheit))}, S. ${b.seiten.map((n) => `<a href="#/einheit/${encodeURIComponent(b.einheit)}/${n}"${neuerTab ? ' target="_blank" rel="noopener"' : ""}>${n}</a>`).join(", ")}`).join(" · ");
+
+// Entscheidungen bleiben in diesem Browser, bis sie exportiert und mit „phl netz freigeben“ übernommen werden.
+const FREIGABE_SCHLUESSEL = "phl-freigaben";
+let freigabenSpeicher = null, speicherOk = true;
+function freigaben() {
+  if (!freigabenSpeicher) { try { freigabenSpeicher = JSON.parse(localStorage.getItem(FREIGABE_SCHLUESSEL) || "{}") || {}; } catch { freigabenSpeicher = {}; speicherOk = false; } }
+  return freigabenSpeicher;
+}
+function sichereFreigaben() { try { localStorage.setItem(FREIGABE_SCHLUESSEL, JSON.stringify(freigabenSpeicher)); speicherOk = true; } catch { speicherOk = false; } }
+const lokalChip = (id) => { const f = freigaben()[id]; return f ? ` <span class="chip ${f.entscheidung === "angenommen" ? "gruen" : "rot"}" title="Noch nicht ins Netz übernommen">deine Entscheidung: ${esc(f.entscheidung)} (noch nicht übernommen)</span>` : ""; };
+
+let konzeptInfo = {};
+async function ladeNetz() {
+  const n = await holen("/api/netz");
+  n.konzeptNamen = Object.fromEntries(n.konzepte.map((k) => [k.id, k.name]));
+  konzeptInfo = Object.fromEntries(n.konzepte.map((k) => [k.id, k]));
+  n.alle = [...n.konzepte.map((x) => ({ ...x, typ: "konzepte" })), ...n.beziehungen.map((x) => ({ ...x, typ: "beziehungen" })), ...n.literatur.map((x) => ({ ...x, typ: "literatur" }))];
+  bereinigeFreigaben(n.alle);
+  return n;
+}
+// Was schon so in den Daten steht, muss nicht mehr lokal gemerkt werden.
+function bereinigeFreigaben(liste) {
+  const f = freigaben(); let weg = false;
+  for (const x of liste) if (f[x.id] && x.freigabe && x.freigabe.entscheidung === f[x.id].entscheidung && x.freigabe.am >= f[x.id].am) { delete f[x.id]; weg = true; }
+  if (weg) sichereFreigaben();
+}
+async function ladeFragen() {
+  const d = await holen("/api/fragen");
+  bereinigeFreigaben(d.fragen);
+  return d.fragen;
+}
+// Abgelehnte Fragen und solche, die du selbst als fehlerhaft gemeldet hast, kommen nicht in die Lernrunde.
+const frageAktiv = (q) => q.status !== "abgelehnt" && freigaben()[q.id]?.entscheidung !== "abgelehnt";
+const frageDetails = (q) => (q.typ === "karte" ? `<div><strong>Antwort:</strong> ${esc(q.antwort)}</div>`
+  : `<ul class="optionsliste">${q.optionen.map((o) => `<li>${o.richtig ? "<strong>richtig:</strong> " : "falsch: "}${esc(o.text)}${o.erklaerung ? ` <span class="leise">– ${esc(o.erklaerung)}</span>` : ""}</li>`).join("")}</ul>`)
+  + (q.erklaerung ? `<div class="leise" style="font-size:14px">${esc(q.erklaerung)}</div>` : "");
+
+// ---------- Lernstand ----------
+// Liegt nur in diesem Browser (IndexedDB, Datenbank „phl-lernstand“). Sichern und Übertragen per Export/Import als JSON.
+const LS_DB = "phl-lernstand", LS_STORE = "stand", LS_KEY = "stand";
+let lernstand = null, lernstandDauerhaft = true;
+const leererStand = () => ({ version: 1, karten: {}, gesehen: {}, tage: {}, punkte: {}, abzeichen: {}, rekorde: {}, einstellungen: { neuProTag: 20, tagesziel: 10, spielelemente: true } });
+const idbErgebnis = (r) => new Promise((ok, fehl) => { r.onsuccess = () => ok(r.result); r.onerror = () => fehl(r.error); });
+async function mitDb(modus, f) {
+  const r = indexedDB.open(LS_DB, 1);
+  r.onupgradeneeded = () => r.result.createObjectStore(LS_STORE);
+  const db = await idbErgebnis(r);
+  try {
+    const t = db.transaction(LS_STORE, modus), e = await idbErgebnis(f(t.objectStore(LS_STORE)));
+    if (modus === "readwrite") await new Promise((ok, fehl) => { t.oncomplete = ok; t.onerror = () => fehl(t.error); t.onabort = () => fehl(t.error); });
+    return e;
+  } finally { db.close(); }
+}
+async function ladeLernstand() {
+  if (lernstand) return lernstand;
+  let s = null;
+  try { s = await mitDb("readonly", (o) => o.get(LS_KEY)); } catch { lernstandDauerhaft = false; }
+  const leer = leererStand();
+  lernstand = { ...leer, ...(s || {}), einstellungen: { ...leer.einstellungen, ...(s?.einstellungen || {}) } };
+  return lernstand;
+}
+async function sichereLernstand() {
+  if (!lernstandDauerhaft) return;
+  try { await mitDb("readwrite", (o) => o.put(lernstand, LS_KEY)); } catch { lernstandDauerhaft = false; }
+}
+const lernstandHinweis = () => lernstandDauerhaft ? "" : `<div class="hinweis">Dieser Browser erlaubt hier keinen dauerhaften Speicher (IndexedDB). Der Lernstand gilt nur bis zum Neuladen. Vorher im <a href="#/">Dashboard</a> exportieren.</div>`;
+const heuteIso = () => new Date().toLocaleDateString("sv-SE");
+const lokalerTag = (iso) => new Date(iso).toLocaleDateString("sv-SE");
+const neuHeute = (st) => Object.values(st.karten).filter((k) => k.verlauf?.[0] && lokalerTag(k.verlauf[0].am) === heuteIso()).length;
+const tagesgrenze = (plus) => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + plus); return d; };
+const karteGueltig = (k) => k && typeof k.s === "number" && typeof k.d === "number" && !isNaN(new Date(k.letzte)) && !isNaN(new Date(k.faellig)) && Array.isArray(k.verlauf);
+/** Import: je Karte gewinnt der Stand mit der späteren letzten Wiederholung. */
+function fuehreZusammen(st, neu) {
+  let uebernommen = 0, ungueltig = 0;
+  for (const [id, k] of Object.entries(neu.karten || {})) {
+    if (!karteGueltig(k)) { ungueltig++; continue; }
+    const alt = st.karten[id];
+    if (!alt || new Date(k.letzte) > new Date(alt.letzte)) { st.karten[id] = k; uebernommen++; }
+  }
+  for (const [id, am] of Object.entries(neu.gesehen || {})) if (!st.gesehen[id] || am < st.gesehen[id]) st.gesehen[id] = am;
+  st.tage ||= {};
+  for (const [tag, n] of Object.entries(neu.tage || {})) if (/^\d{4}-\d{2}-\d{2}$/.test(tag) && Number.isInteger(n) && n > 0 && n > (st.tage[tag] || 0)) st.tage[tag] = n;
+  st.punkte ||= {};
+  for (const [tag, n] of Object.entries(neu.punkte || {})) if (/^\d{4}-\d{2}-\d{2}$/.test(tag) && Number.isInteger(n) && n > (st.punkte[tag] || 0)) st.punkte[tag] = n;
+  st.abzeichen ||= {};
+  for (const [id, am] of Object.entries(neu.abzeichen || {})) if (SIEGEL.some((x) => x[0] === id) && /^\d{4}-\d{2}-\d{2}$/.test(am) && (!st.abzeichen[id] || am < st.abzeichen[id])) st.abzeichen[id] = am;
+  st.rekorde ||= {};
+  for (const [id, n] of Object.entries(neu.rekorde || {})) if (["kombo", "perfekt"].includes(id) && Number.isInteger(n) && n > (st.rekorde[id] || 0)) st.rekorde[id] = n;
+  return { uebernommen, ungueltig };
+}
+
+// ---------- Spielelemente (Begründung und Grenzen: docs/LERNDESIGN.md, Abschnitt 8) ----------
+// Auf Wunsch der Nutzerin (12.11.2026) nach dem Vorbild von Duolingo: Punkte, Kombo, Level, Serie, Tagesziel, Abzeichen, Sterne je Einheit.
+// Vergleich mit anderen gibt es nicht. Alles lässt sich im Dashboard abschalten, gezählt wird weiter.
+const PUNKTE = { antwort: 10, richtig: 5, kombo: 5, runde: 20, perfekt: 10, ziel: 25 };
+const PUNKTE_JE_ANTWORT = PUNKTE.antwort;
+const tagNr = (iso) => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) / 864e5;
+const tagVor = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toLocaleDateString("sv-SE"); };
+/** Serie = Tage mit erreichtem Tagesziel. Ein einzelner Tag ohne Ziel unterbricht sie nicht, zwei in Folge schon (eigene Festlegung). */
+function serie(st, heute = heuteIso()) {
+  const ziel = st.einstellungen.tagesziel;
+  const tage = Object.entries(st.tage || {}).filter(([, n]) => n >= ziel).map(([d]) => tagNr(d)).sort((a, b) => a - b);
+  let laenge = 0, beste = 0;
+  tage.forEach((t, i) => { laenge = i && t - tage[i - 1] <= 2 ? laenge + 1 : 1; beste = Math.max(beste, laenge); });
+  const aktiv = tage.length > 0 && tagNr(heute) - tage.at(-1) <= 2;
+  const heuteErreicht = (st.tage?.[heute] || 0) >= ziel;
+  const ruhetag = aktiv && !heuteErreicht && tagNr(heute) - tage.at(-1) === 2; // gestern fehlte: heute ist die Serie gefährdet
+  return { aktuell: aktiv ? laenge : 0, beste, heuteErreicht, ruhetag, zieltage: tage.length };
+}
+const punkteTag = (st, d) => st.punkte?.[d] ?? PUNKTE.antwort * (st.tage?.[d] || 0);
+const punkteGesamt = (st) => [...new Set([...Object.keys(st.tage || {}), ...Object.keys(st.punkte || {})])].reduce((a, d) => a + punkteTag(st, d), 0);
+const antwortenGesamt = (st) => Object.values(st.tage || {}).reduce((a, n) => a + n, 0);
+// Level L beginnt bei 25·L·(L−1) Punkten: 50, 150, 300, 500 … (eigene Festlegung)
+const levelSchwelle = (l) => 25 * l * (l - 1);
+function levelVon(punkte) {
+  let l = 1; while (punkte >= levelSchwelle(l + 1)) l++;
+  return { level: l, anteil: (punkte - levelSchwelle(l)) / (levelSchwelle(l + 1) - levelSchwelle(l)), bis: levelSchwelle(l + 1) - punkte };
+}
+const SIEGEL = [
+  ["start", "Erster Schritt", "Die erste Frage beantwortet", (c) => c.antworten >= 1],
+  ["a100", "Hundert", "100 Antworten", (c) => c.antworten >= 100],
+  ["a500", "Fünfhundert", "500 Antworten", (c) => c.antworten >= 500],
+  ["ziel", "Tagesziel", "Das Tagesziel zum ersten Mal erreicht", (c) => c.serie.zieltage >= 1],
+  ["s3", "Dranbleiben", "3 Tage Serie", (c) => c.serie.beste >= 3],
+  ["s7", "Wochenserie", "7 Tage Serie", (c) => c.serie.beste >= 7],
+  ["s30", "Monatsserie", "30 Tage Serie", (c) => c.serie.beste >= 30],
+  ["k5", "Kombo", "5 Treffer in Folge", (c) => c.kombo >= 5],
+  ["k10", "Große Kombo", "10 Treffer in Folge", (c) => c.kombo >= 10],
+  ["perfekt", "Makellos", "Eine Runde mit mindestens 5 Antworten ohne „Nochmal“", (c) => c.perfekt >= 1],
+  ["verstanden", "Verstanden", "Erstes Konzept auf „verstanden“", (c) => c.stufen.some((s) => s === "verstanden" || s === "sicher")],
+  ["sicher", "Sicher", "Erstes Konzept auf „sicher“", (c) => c.stufen.includes("sicher")],
+  ["einheit", "Einheit gemeistert", "Alle Konzepte einer Einheit mindestens „verstanden“", (c) => c.einheitGemeistert],
+  ["lv5", "Level 5", "Level 5 erreicht", (c) => c.level >= 5],
+];
+/** Vergibt neu erreichte Abzeichen (Datum = heute) und liefert deren Namen. `fragen`: alle aktiven Lernfragen. */
+function pruefeAbzeichen(st, fragen) {
+  st.abzeichen ||= {}; st.rekorde ||= {};
+  const konzepte = [...new Set(fragen.flatMap((q) => q.konzepte))], stufen = konzepte.map((k) => stufe(k, fragen, st));
+  const stufeVon = Object.fromEntries(konzepte.map((k, i) => [k, stufen[i]]));
+  const ok = (s) => s === "verstanden" || s === "sicher";
+  const einheiten = [...new Set(fragen.map((q) => q.einheit))];
+  const c = { antworten: antwortenGesamt(st), serie: serie(st), kombo: st.rekorde.kombo || 0, perfekt: st.rekorde.perfekt || 0, stufen,
+    level: levelVon(punkteGesamt(st)).level,
+    einheitGemeistert: einheiten.some((e) => { const ks = [...new Set(fragen.filter((q) => q.einheit === e).flatMap((q) => q.konzepte))]; return ks.length && ks.every((k) => ok(stufeVon[k])); }) };
+  const neu = [];
+  for (const [id, name, , test] of SIEGEL) if (!st.abzeichen[id] && test(c)) { st.abzeichen[id] = heuteIso(); neu.push(name); }
+  return neu;
+}
+/** Sterne je Einheit (0–3): 1 = alle Konzepte mindestens „gesehen“, 2 = alle „verstanden“, 3 = alle „sicher“. */
+function sterne(einheit, fragen, st) {
+  const ks = [...new Set(fragen.filter((q) => q.einheit === einheit).flatMap((q) => q.konzepte))].map((k) => stufe(k, fragen, st));
+  if (!ks.length) return 0;
+  return ks.every((s) => s === "sicher") ? 3 : ks.every((s) => s === "sicher" || s === "verstanden") ? 2 : ks.every((s) => s !== "unbekannt") ? 1 : 0;
+}
+const sternText = (n) => `<span class="sterne" title="${n} von 3 Sternen" aria-label="${n} von 3 Sternen">${"★".repeat(n)}<span class="leer">${"★".repeat(3 - n)}</span></span>`;
+
+// Rückmeldung: Toast und Konfetti, beides ohne Ton; bei „weniger Bewegung“ im System ohne Animation.
+function zeigeToast(zeilen, art) {
+  let t = $("#toast");
+  if (!t) { t = document.createElement("div"); t.id = "toast"; t.setAttribute("role", "status"); document.body.append(t); }
+  t.className = "toast " + (art || ""); t.innerHTML = zeilen.map((z) => `<div>${z}</div>`).join("");
+  t.classList.remove("zeigt"); void t.offsetWidth; t.classList.add("zeigt");
+  clearTimeout(zeigeToast.z); zeigeToast.z = setTimeout(() => t.classList.remove("zeigt"), art === "gross" ? 3600 : 1700);
+}
+function konfetti() {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const f = document.createElement("div"); f.className = "konfetti"; f.setAttribute("aria-hidden", "true");
+  const farben = ["#1f6f5c", "#e2b04a", "#2b5c9e", "#a8322d", "#5cc2a3"];
+  for (let i = 0; i < 36; i++) {
+    const s = document.createElement("span");
+    s.style.cssText = `left:${Math.random() * 100}%;background:${farben[i % 5]};animation-delay:${Math.random() * 0.4}s;--dx:${Math.round(Math.random() * 160 - 80)}px`;
+    f.append(s);
+  }
+  document.body.append(f); setTimeout(() => f.remove(), 2400);
+}
+/** Nach jeder Antwort: Punkte, Kombo, Tagesziel, Level, Abzeichen. Muss VOR dem Erhöhen von tage[heute] laufen. Liefert die Zeilen für die Rückmeldung. */
+function belohne(q, note, s, fragen) {
+  const st = lernstand, heute = heuteIso(), ziel = st.einstellungen.tagesziel;
+  const vorherPunkte = punkteGesamt(st), vorherAntworten = st.tage?.[heute] || 0;
+  const treffer = note >= 2;
+  s.kombo = treffer ? (s.kombo || 0) + 1 : 0; s.besteKombo = Math.max(s.besteKombo || 0, s.kombo);
+  st.rekorde ||= {}; st.rekorde.kombo = Math.max(st.rekorde.kombo || 0, s.kombo);
+  let p = PUNKTE.antwort; const zeilen = [`+${PUNKTE.antwort} Punkte`];
+  if (q.typ === "auswahl" && treffer) { p += PUNKTE.richtig; zeilen[0] = `+${PUNKTE.antwort + PUNKTE.richtig} Punkte · richtig`; }
+  if (treffer && s.kombo >= 3) { p += PUNKTE.kombo; zeilen.push(`🔥 Kombo ×${s.kombo} · +${PUNKTE.kombo}`); }
+  let gross = false;
+  if (vorherAntworten < ziel && vorherAntworten + 1 >= ziel) { p += PUNKTE.ziel; zeilen.push(`🎯 Tagesziel erreicht · +${PUNKTE.ziel}`); gross = true; }
+  st.punkte ||= {}; st.punkte[heute] = punkteTag(st, heute) + p;
+  st.tage ||= {}; st.tage[heute] = vorherAntworten + 1;
+  const l0 = levelVon(vorherPunkte).level, l1 = levelVon(vorherPunkte + p).level;
+  if (l1 > l0) { zeilen.push(`⭐ Level ${l1} erreicht`); gross = true; }
+  for (const n of pruefeAbzeichen(st, fragen)) { zeilen.push(`🏅 Neues Abzeichen: ${n}`); gross = true; }
+  return { zeilen, gross, punkte: p };
+}
+/** Rundenbonus, einmal je beendeter Runde. */
+function rundenBonus(s, fragen) {
+  const st = lernstand, neu = s.beantwortet - (s.bonusBis || 0);
+  if (neu <= 0) return null;
+  const perfekt = neu >= 5 && s.nochmal - (s.nochmalBis || 0) === 0;
+  const p = PUNKTE.runde + (perfekt ? PUNKTE.perfekt : 0), h = heuteIso();
+  s.bonusBis = s.beantwortet; s.nochmalBis = s.nochmal;
+  st.punkte ||= {}; st.rekorde ||= {};
+  const l0 = levelVon(punkteGesamt(st)).level;
+  st.punkte[h] = punkteTag(st, h) + p;
+  if (perfekt) st.rekorde.perfekt = (st.rekorde.perfekt || 0) + 1;
+  const zeilen = [`🏁 Runde beendet · +${PUNKTE.runde}`]; if (perfekt) zeilen.push(`✨ Makellos, keine „Nochmal“ · +${PUNKTE.perfekt}`);
+  const l1 = levelVon(punkteGesamt(st)).level; if (l1 > l0) zeilen.push(`⭐ Level ${l1} erreicht`);
+  for (const n of pruefeAbzeichen(st, fragen)) zeilen.push(`🏅 Neues Abzeichen: ${n}`);
+  return { zeilen, punkte: p, perfekt };
+}
+/** Kurzzeile für die Lernansicht. */
+function spielZeile(st) {
+  if (!st.einstellungen.spielelemente) return "";
+  const n = st.tage?.[heuteIso()] || 0, ziel = st.einstellungen.tagesziel, se = serie(st), lv = levelVon(punkteGesamt(st)), k = sitzung?.kombo || 0;
+  return `<div class="spielzeile"><span>🎯 Heute <strong>${n} / ${ziel}</strong>${n >= ziel ? " ✓" : ""}</span>
+    <span>🔥 Serie <strong>${se.aktuell}</strong>${se.ruhetag ? " (heute fehlt noch das Ziel)" : ""}</span>
+    <span>⭐ Level <strong>${lv.level}</strong> <span class="leise">noch ${zahl(lv.bis)}</span></span>
+    <span><strong>${zahl(punkteGesamt(st))}</strong> Punkte</span>${k >= 2 ? `<span class="kombo">Kombo ×${k}</span>` : ""}</div>
+    <div class="fortschrittsbalken" style="margin:0 0 12px"><div style="width:${Math.min(100, Math.round((100 * n) / ziel))}%"></div></div>`;
+}
+/** Dashboard-Block: Ring fürs Tagesziel, Serie, Level, Punkte, Woche, Abzeichen. */
+function spielBlock(st) {
+  const n = st.tage?.[heuteIso()] || 0, ziel = st.einstellungen.tagesziel, se = serie(st), lv = levelVon(punkteGesamt(st));
+  const anteil = Math.min(1, n / ziel), U = 2 * Math.PI * 34;
+  const woche = [6, 5, 4, 3, 2, 1, 0].map((v) => {
+    const d = tagVor(v), a = st.tage?.[d] || 0, geschafft = a >= ziel;
+    return `<div class="tag ${geschafft ? "ok" : a ? "teil" : ""} ${v === 0 ? "heute" : ""}" title="${d}: ${a} Antworten"><span>${geschafft ? "✓" : a || ""}</span><small>${new Date(d + "T12:00").toLocaleDateString("de-AT", { weekday: "short" })}</small></div>`;
+  }).join("");
+  const abz = SIEGEL.map(([id, name, text]) => {
+    const am = st.abzeichen?.[id];
+    return `<div class="siegel ${am ? "da" : ""}" title="${esc(text)}${am ? " · " + am : ""}"><div class="sym">${am ? "🏅" : "🔒"}</div><div>${esc(name)}</div><small>${esc(text)}</small></div>`;
+  }).join("");
+  return `<div class="spielblock">
+    <div class="spielkopf">
+      <div class="ring"><svg viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="34" class="bahn"/><circle cx="40" cy="40" r="34" class="fuell" stroke-dasharray="${U}" stroke-dashoffset="${U * (1 - anteil)}" transform="rotate(-90 40 40)"/></svg>
+        <div class="mitte"><strong>${n}</strong><small>/ ${ziel}</small></div></div>
+      <div class="werte">
+        <div><span class="gross">🔥 ${se.aktuell}</span> <span class="leise">${se.aktuell === 1 ? "Tag" : "Tage"} Serie · Rekord ${se.beste}${se.ruhetag ? " · heute fehlt noch das Ziel" : ""}</span></div>
+        <div><span class="gross">⭐ Level ${lv.level}</span> <span class="leise">noch ${zahl(lv.bis)} Punkte bis Level ${lv.level + 1}</span></div>
+        <div class="fortschrittsbalken" style="margin:4px 0 8px"><div style="width:${Math.round(lv.anteil * 100)}%"></div></div>
+        <div><span class="gross">${zahl(punkteGesamt(st))}</span> <span class="leise">Punkte · bester Kombo ×${st.rekorde?.kombo || 0}</span></div>
+      </div></div>
+    <div class="woche">${woche}</div>
+    <details class="abzeichen"><summary>Abzeichen ${Object.keys(st.abzeichen || {}).length} / ${SIEGEL.length}</summary><div class="siegelraster">${abz}</div></details>
+    <p class="leise" style="font-size:13px;margin:8px 0 0">Punkte: ${PUNKTE.antwort} je Antwort, +${PUNKTE.richtig} für eine richtige Auswahlfrage, +${PUNKTE.kombo} ab 3 Treffern in Folge, +${PUNKTE.ziel} fürs Tagesziel, +${PUNKTE.runde} je beendeter Runde (+${PUNKTE.perfekt} ohne „Nochmal“).</p></div>`;
+}
+
+// Stufen je Konzept: beruhen auf Abrufergebnissen, nicht auf Selbsteinschätzung (siehe docs/LERNDESIGN.md).
+const STUFE = { unbekannt: ["unbekannt", ""], gesehen: ["gesehen", "blau"], verstanden: ["verstanden", "gelb"], sicher: ["sicher", "gruen"] };
+const STUFE_REIHE = ["sicher", "verstanden", "gesehen", "unbekannt"];
+const SICHER_TAGE = 21; // Stabilität in Tagen; Schwelle angelehnt an „mature“ in Anki, eigene Festlegung
+function stufe(konzeptId, fragen, st) {
+  const karten = fragen.filter((q) => q.konzepte.includes(konzeptId)).map((q) => st.karten[q.id]);
+  const richtig = (k) => k && k.verlauf.at(-1)?.note >= 2;
+  if (karten.length && karten.every(richtig)) return karten.every((k) => k.s >= SICHER_TAGE) ? "sicher" : "verstanden";
+  if (st.gesehen[konzeptId] || karten.some(Boolean)) return "gesehen";
+  return "unbekannt";
+}
+const stufeChip = (s) => `<span class="chip ${STUFE[s][1]}" title="Lernstufe">${esc(STUFE[s][0])}</span>`;
+
+const NOTEN = { 1: "Nochmal", 2: "Schwer", 3: "Gut", 4: "Leicht" };
+const dauer = (tage) => tage === 0 ? "in 10 Min." : tage === 1 ? "in 1 Tag" : tage < 31 ? `in ${tage} Tagen`
+  : tage < 365 ? `in ${Math.round(tage / 30.4)} Mon.` : `in ${(tage / 365).toLocaleString("de-AT", { maximumFractionDigits: 1 })} J.`;
+const mische = (a) => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+function ladeHerunter(name, daten) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(daten, null, 2)], { type: "application/json" }));
+  a.download = name; document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// ---------- Lernen ----------
+let lernFilter = { einheit: "", konzept: "" }, sitzung = null, lernTasten = null;
+async function zeigeLernen(art, wert) {
+  if (art === "konzept") lernFilter = { einheit: "", konzept: wert || "" };
+  else if (art === "einheit") lernFilter = { einheit: wert || "", konzept: "" };
+  const [fragen, n, st] = await Promise.all([ladeFragen(), ladeNetz(), ladeLernstand()]);
+  const alle = fragen.filter(frageAktiv);
+  if (!alle.length) { $("#haupt").innerHTML = `<h1>Lernen</h1><p>Noch keine Lernfragen vorhanden (<code>_lerntool/fragen/</code>).</p>`; return; }
+  const passt = (q) => (!lernFilter.einheit || q.einheit === lernFilter.einheit) && (!lernFilter.konzept || q.konzepte.includes(lernFilter.konzept));
+  const auswahl = alle.filter(passt), jetzt = new Date();
+  const faellig = mische(auswahl.filter((q) => st.karten[q.id] && new Date(st.karten[q.id].faellig) <= jetzt));
+  const unbekannt = mische(auswahl.filter((q) => !st.karten[q.id]));
+  const frei = Math.max(0, st.einstellungen.neuProTag - neuHeute(st));
+  const neue = unbekannt.slice(0, frei);
+  sitzung = { fragen: Object.fromEntries(alle.map((q) => [q.id, q])), auswahl: auswahl.map((q) => q.id), rest: unbekannt.slice(frei).map((q) => q.id),
+    schlange: [...faellig, ...neue].map((q) => q.id), pos: 0, beantwortet: 0, nochmal: 0, grenzeErreicht: unbekannt.length > neue.length };
+
+  const einheiten = [...new Set(alle.map((q) => q.einheit))];
+  const nachKurs = {};
+  for (const id of einheiten) { const d = bestand.dateien.find((x) => x.id === id); (nachKurs[d?.kurs || "ohne Kurs"] ||= []).push(id); }
+  const konzepte = [...new Set(alle.flatMap((q) => q.konzepte))].sort((a, b) => (n.konzeptNamen[a] || a).localeCompare(n.konzeptNamen[b] || b, "de"));
+  $("#haupt").innerHTML = `<h1>Lernen</h1>
+    ${lernstandHinweis()}
+    <div id="l-spiel">${spielZeile(st)}</div>
+    <div class="filter">
+      <select id="l-einheit" aria-label="Einheit"><option value="">alle Einheiten</option>${Object.entries(nachKurs).map(([kurs, ids]) => `<optgroup label="${esc(kurs)}">${ids.map((id) =>
+        `<option value="${esc(id)}" ${lernFilter.einheit === id ? "selected" : ""}>${esc(kurzName(id))}</option>`).join("")}</optgroup>`).join("")}</select>
+      <select id="l-konzept" aria-label="Konzept"><option value="">alle Konzepte</option>${konzepte.map((id) => `<option value="${esc(id)}" ${lernFilter.konzept === id ? "selected" : ""}>${esc(n.konzeptNamen[id] || id)}</option>`).join("")}</select>
+      <span class="leise">${auswahl.length} Fragen · ${faellig.length} fällig · ${neue.length} neu${sitzung.grenzeErreicht ? ` (Grenze ${st.einstellungen.neuProTag} neue pro Tag)` : ""}</span>
+    </div>
+    <div id="lern-flaeche"></div>`;
+  $("#l-einheit").addEventListener("change", (ev) => { lernFilter.einheit = ev.target.value; zeigeLernen(); });
+  $("#l-konzept").addEventListener("change", (ev) => { lernFilter.konzept = ev.target.value; zeigeLernen(); });
+  zeigeKarte();
+}
+
+function zeigeKarte() {
+  const s = sitzung, flaeche = $("#lern-flaeche");
+  lernTasten = null;
+  if (s.pos >= s.schlange.length) return zeigeRundenende();
+  const q = s.fragen[s.schlange[s.pos]], karte = lernstand.karten[q.id], v = FSRS.vorschau(karte, new Date());
+  s.aktiv = q.id;
+  const offen = s.schlange.length - s.pos;
+  const knoepfe = (noten) => `<div class="bewertung ${noten.length === 3 ? "drei" : ""}">${noten.map((g) =>
+    `<button class="knopf ${g === 3 ? "primaer" : ""}" data-note="${g}"><strong>${g}</strong> ${NOTEN[g]}<small>${dauer(v[g])}</small></button>`).join("")}</div>`;
+  const beleg = `<div class="belegzeile" style="margin-top:8px">Beleg: ${belegLinks(q.belege, true)}</div>`;
+  flaeche.innerHTML = `<div class="fortschrittsbalken"><div style="width:${Math.round((100 * s.beantwortet) / (s.beantwortet + offen))}%"></div></div>
+    <div class="lernkarte">
+      <div class="kopfzeile"><span class="chip">${karte ? "Wiederholung" : "neu"}</span>${q.herkunft === "pruefungsblatt" ? ' <span class="chip gruen" title="Frage und Möglichkeiten wortgleich vom Prüfungsblatt">Prüfungsfrage</span>' : ""}
+        <span class="leise" style="font-size:13px">${esc(kurzName(q.einheit))} · noch ${offen} in dieser Runde</span></div>
+      <div class="frage">${esc(q.frage)}</div>
+      ${q.typ === "karte" ? `<textarea id="l-eigene" placeholder="Deine Antwort (optional)" aria-label="Deine Antwort (optional)"></textarea>
+        <div class="aktionen"><button class="knopf primaer" id="l-zeigen">Antwort zeigen</button></div>`
+      : `<div class="optionen">${mische(q.optionen.map((o, i) => ({ ...o, i }))).map((o, nr) =>
+          `<button data-option="${o.i}"><strong>${"abcdefgh"[nr]})</strong> ${esc(o.text)}<span class="erkl" hidden>${esc(o.erklaerung || "")}</span></button>`).join("")}</div>`}
+      <div id="l-aufloesung"></div>
+      <div class="aktionen" style="margin-top:16px">
+        <button class="knopf" id="l-melden">Frage fehlerhaft melden</button>
+        <span id="l-meldefeld" style="display:none"><input class="notiz" id="l-meldenotiz" type="text" placeholder="Was stimmt nicht?" aria-label="Was stimmt nicht?" style="margin:0;flex:1 1 260px">
+          <button class="knopf an-rot" id="l-meldenOk">Melden und überspringen</button></span>
+      </div>
+    </div>`;
+  const aufl = $("#l-aufloesung");
+  const bewerten = () => aufl.querySelectorAll("[data-note]").forEach((b) => b.addEventListener("click", () => bewerteKarte(q, Number(b.dataset.note))));
+  if (q.typ === "karte") {
+    const zeigen = () => {
+      if (!$("#l-zeigen")) return;
+      $("#l-zeigen").parentElement.remove(); $("#l-eigene").readOnly = true; $("#l-eigene").blur();
+      aufl.innerHTML = `<div class="aufloesung"><div><strong>Antwort:</strong> ${esc(q.antwort)}</div>
+        ${q.erklaerung ? `<div class="leise" style="margin-top:6px">${esc(q.erklaerung)}</div>` : ""}${beleg}
+        ${knoepfe([1, 2, 3, 4])}</div>`;
+      bewerten();
+      lernTasten = (ev) => { if (NOTEN[ev.key]) bewerteKarte(q, Number(ev.key)); };
+    };
+    $("#l-zeigen").addEventListener("click", zeigen);
+    lernTasten = (ev) => { if (ev.key === " " || ev.key === "Enter") { ev.preventDefault(); zeigen(); } };
+  } else {
+    const waehle = (b) => {
+      if (b.disabled) return;
+      const gewaehlt = q.optionen[Number(b.dataset.option)], richtig = gewaehlt.richtig;
+      flaeche.querySelectorAll("[data-option]").forEach((x) => {
+        x.disabled = true; x.querySelector(".erkl").hidden = false;
+        if (q.optionen[Number(x.dataset.option)].richtig) x.classList.add("richtig");
+      });
+      if (!richtig) b.classList.add("falsch");
+      aufl.innerHTML = `<div class="aufloesung"><div><strong>${richtig ? "Richtig." : "Nicht richtig."}</strong> ${q.erklaerung ? esc(q.erklaerung) : ""}</div>${beleg}
+        ${richtig ? `${knoepfe([2, 3, 4])}`
+          : `<div class="aktionen" style="margin-top:12px"><button class="knopf primaer" data-note="1">Weiter</button></div>`}</div>`;
+      bewerten();
+      lernTasten = (ev) => { if (richtig ? ["2", "3", "4"].includes(ev.key) : ev.key === "Enter" || ev.key === "1") { ev.preventDefault(); bewerteKarte(q, richtig ? Number(ev.key) : 1); } };
+    };
+    flaeche.querySelectorAll("[data-option]").forEach((b) => b.addEventListener("click", () => waehle(b)));
+    lernTasten = (ev) => { const i = "abcdefgh".indexOf(ev.key.toLowerCase()); const b = flaeche.querySelectorAll("[data-option]")[i]; if (i >= 0 && b) waehle(b); };
+  }
+  $("#l-melden").addEventListener("click", () => { $("#l-melden").remove(); $("#l-meldefeld").style.display = "contents"; $("#l-meldenotiz").focus(); lernTasten = null; });
+  $("#l-meldenOk").addEventListener("click", () => {
+    const notiz = $("#l-meldenotiz").value.trim();
+    freigaben()[q.id] = { entscheidung: "abgelehnt", am: heuteIso(), ...(notiz ? { notiz } : {}) };
+    sichereFreigaben();
+    s.schlange = s.schlange.filter((id, i) => i < s.pos || id !== q.id);
+    s.gemeldet = (s.gemeldet || 0) + 1;
+    zeigeKarte();
+  });
+}
+
+async function bewerteKarte(q, note) {
+  const s = sitzung;
+  if (s.aktiv !== q.id) return; // doppelte Auslösung (Klick und Taste) nur einmal werten
+  s.aktiv = null; lernTasten = null;
+  lernstand.karten[q.id] = FSRS.bewerte(lernstand.karten[q.id], note, new Date());
+  for (const k of q.konzepte) if (!lernstand.gesehen[k]) lernstand.gesehen[k] = heuteIso();
+  const lohn = belohne(q, note, s, Object.values(s.fragen));
+  await sichereLernstand();
+  if (lernstand.einstellungen.spielelemente) { zeigeToast(lohn.zeilen, lohn.gross ? "gross" : note >= 2 ? "gut" : ""); if (lohn.gross) konfetti(); }
+  s.beantwortet++;
+  if (note === 1) { s.nochmal++; s.schlange.push(q.id); } // erneut am Ende der Runde (successive relearning)
+  s.pos++;
+  if ($("#l-spiel")) $("#l-spiel").innerHTML = spielZeile(lernstand);
+  zeigeKarte();
+  const f = $("#lern-flaeche"); if (f && f.getBoundingClientRect().top < 0) f.scrollIntoView();
+}
+
+function zeigeRundenende() {
+  const s = sitzung, jetzt = new Date();
+  const bonus = s.beantwortet ? rundenBonus(s, Object.values(s.fragen)) : null;
+  if (bonus) {
+    sichereLernstand();
+    if (lernstand.einstellungen.spielelemente) { zeigeToast(bonus.zeilen, "gross"); konfetti(); }
+    if ($("#l-spiel")) $("#l-spiel").innerHTML = spielZeile(lernstand);
+  }
+  const naechste = s.auswahl.map((id) => lernstand.karten[id]?.faellig).filter((f) => f && new Date(f) > jetzt).sort()[0];
+  $("#lern-flaeche").innerHTML = `<div class="lernkarte">
+    <h2>${s.beantwortet ? "Runde beendet" : "Gerade nichts fällig"}</h2>
+    ${s.beantwortet ? `<p>${s.beantwortet} Antworten, davon ${s.nochmal}× „Nochmal“.${s.besteKombo >= 3 && lernstand.einstellungen.spielelemente ? ` Bester Kombo ×${s.besteKombo}.` : ""}${s.gemeldet ? ` ${s.gemeldet} Frage(n) als fehlerhaft gemeldet, zu finden unter <a href="#/freigabe">Freigabe</a>.` : ""}</p>` : `<p>In dieser Auswahl ist im Moment keine Frage fällig.</p>`}
+    <p class="leise">Nächste Frage fällig: ${naechste ? esc(fmtDatum(naechste)) : "–"}${s.rest.length ? ` · ${s.rest.length} neue offen` : ""}</p>
+    <div class="aktionen">${s.rest.length ? `<button class="knopf" id="l-mehr">${Math.min(10, s.rest.length)} weitere neue Fragen</button>` : ""}
+      <a class="knopf" href="#/">Zum Dashboard</a></div></div>`;
+  $("#l-mehr")?.addEventListener("click", () => { s.schlange.push(...s.rest.splice(0, 10)); zeigeKarte(); });
+}
+
+// ---------- Fortschritt ----------
+async function zeigeFortschritt(meldung) {
+  const [fragen, n, st] = await Promise.all([ladeFragen(), ladeNetz(), ladeLernstand()]);
+  const alle = fragen.filter(frageAktiv), jetzt = new Date();
+  const k = (q) => st.karten[q.id];
+  const zaehle = (liste) => {
+    const gelernt = liste.filter(k);
+    const faellig = (a, b) => gelernt.filter((q) => { const f = new Date(k(q).faellig); return f >= a && f < b; }).length;
+    const r = gelernt.map((q) => FSRS.aktuelleAbrufbarkeit(k(q), jetzt));
+    return { fragen: liste.length, gelernt: gelernt.length, heute: faellig(new Date(0), tagesgrenze(1)), morgen: faellig(tagesgrenze(1), tagesgrenze(2)),
+      abruf: r.length ? Math.round((100 * r.reduce((a, b) => a + b, 0)) / r.length) : null };
+  };
+  const ges = zaehle(alle);
+  const neuFrei = Math.min(Math.max(0, st.einstellungen.neuProTag - neuHeute(st)), alle.filter((q) => !k(q)).length);
+  if (pruefeAbzeichen(st, alle).length) await sichereLernstand();
+  const wdh = Object.values(st.karten).reduce((a, x) => a + (x.wdh || 0), 0);
+  const einheiten = [...new Set(alle.map((q) => q.einheit))];
+  const konzepte = n.konzepte.filter((x) => x.status !== "abgelehnt").map((x) => ({ ...x, stufe: stufe(x.id, alle, st), anzahl: alle.filter((q) => q.konzepte.includes(x.id)).length }))
+    .sort((a, b) => STUFE_REIHE.indexOf(a.stufe) - STUFE_REIHE.indexOf(b.stufe) || a.name.localeCompare(b.name, "de"));
+  const proStufe = Object.fromEntries(STUFE_REIHE.map((s) => [s, konzepte.filter((x) => x.stufe === s).length]));
+  $("#haupt").innerHTML = `<h1>Lernfortschritt</h1>
+    ${lernstandHinweis()}${meldung ? `<div class="hinweis">${meldung}</div>` : ""}
+    <div class="karten">
+      <div class="karte"><div class="zahl">${ges.heute}</div><div class="leise">heute fällig</div></div>
+      <div class="karte"><div class="zahl">${ges.morgen}</div><div class="leise">morgen fällig</div></div>
+      <div class="karte"><div class="zahl">${ges.gelernt}<span class="leise" style="font-size:16px"> / ${ges.fragen}</span></div><div class="leise">Fragen gelernt</div></div>
+      <div class="karte"><div class="zahl">${zahl(wdh)}</div><div class="leise">Antworten</div></div>
+      <div class="karte"><div class="zahl">${ges.abruf ?? "–"}${ges.abruf != null ? "&nbsp;%" : ""}</div><div class="leise" title="Wie wahrscheinlich du die schon gelernten Fragen jetzt noch richtig weißt. Schätzung des Wiederholungsplans (FSRS), Mittel über alle gelernten Fragen.">Abrufwahrscheinlichkeit (geschätzt) <span aria-hidden="true">ⓘ</span></div></div>
+    </div>
+    <div class="aktionen" style="margin:-8px 0 18px"><a class="knopf primaer" href="#/lernen">${ges.heute ? `${ges.heute} fällige Fragen lernen` : neuFrei ? `${neuFrei} neue Fragen lernen` : "Lernen"}</a></div>
+    ${st.einstellungen.spielelemente ? spielBlock(st) : ""}
+    <h2>Nach Einheit</h2>
+    <div class="tabellenrahmen"><table><thead><tr><th>Einheit</th><th>Sterne</th><th class="zahlrechts">Fragen</th><th class="zahlrechts">gelernt</th><th class="zahlrechts">heute fällig</th><th class="zahlrechts">Abruf (geschätzt)</th></tr></thead><tbody>
+      ${einheiten.map((id) => { const z = zaehle(alle.filter((q) => q.einheit === id)); return `<tr><td><a href="#/lernen/einheit/${encodeURIComponent(id)}">${esc(kurzName(id))}</a></td>
+        <td>${sternText(sterne(id, alle, st))}</td><td class="zahlrechts">${z.fragen}</td><td class="zahlrechts">${z.gelernt}</td><td class="zahlrechts">${z.heute}</td><td class="zahlrechts">${z.abruf != null ? z.abruf + " %" : "–"}</td></tr>`; }).join("")}
+    </tbody></table></div>
+    <h2>Konzepte</h2>
+    <p class="leise" style="font-size:14px">${STUFE_REIHE.map((s) => `${stufeChip(s)} ${proStufe[s]}`).join(" &nbsp; ")}</p>
+    <details class="leise" style="font-size:14px;margin-bottom:10px"><summary>Was bedeuten die Stufen?</summary><ul style="margin:6px 0"><li><strong>gesehen</strong>: Konzept geöffnet oder eine Frage dazu beantwortet.</li><li><strong>verstanden</strong>: alle Fragen zuletzt richtig.</li><li><strong>sicher</strong>: verstanden, und jede Frage hält mindestens ${SICHER_TAGE} Tage.</li></ul></details>
+    <details><summary>Alle Konzepte anzeigen</summary><div class="tabellenrahmen"><table><thead><tr><th>Konzept</th><th>Stufe</th><th class="zahlrechts">Fragen</th><th></th></tr></thead><tbody>
+      ${konzepte.map((x) => `<tr><td><a href="#/netz/${encodeURIComponent(x.id)}">${esc(x.name)}</a></td><td>${stufeChip(x.stufe)}</td><td class="zahlrechts">${x.anzahl}</td>
+        <td>${x.anzahl ? `<a href="#/lernen/konzept/${encodeURIComponent(x.id)}">lernen</a>` : ""}</td></tr>`).join("")}
+    </tbody></table></div></details>
+    <h2>Lernstand</h2>
+    <div class="filter"><label>Neue Fragen pro Tag <input id="f-neu" type="number" min="1" max="200" value="${st.einstellungen.neuProTag}" style="width:80px"></label>
+      <label>Tagesziel (Antworten) <input id="f-ziel" type="number" min="1" max="200" value="${st.einstellungen.tagesziel}" style="width:80px"></label>
+      <label><input id="f-spiel" type="checkbox" ${st.einstellungen.spielelemente ? "checked" : ""}> Punkte, Level, Serie, Abzeichen und Rückmeldungen anzeigen</label>
+</div>
+    <div class="aktionen">
+      <button class="knopf primaer" id="f-export">Lernstand exportieren</button>
+      <label class="knopf" for="f-import">Lernstand importieren …</label><input id="f-import" type="file" accept="application/json,.json" hidden>
+      <button class="knopf" id="f-reset">Lernstand zurücksetzen</button>
+    </div>`;
+  $("#f-neu").addEventListener("change", async (ev) => {
+    const w = Math.round(Number(ev.target.value));
+    if (w >= 1 && w <= 200) { st.einstellungen.neuProTag = w; await sichereLernstand(); } else ev.target.value = st.einstellungen.neuProTag;
+  });
+  $("#f-ziel").addEventListener("change", async (ev) => {
+    const w = Math.round(Number(ev.target.value));
+    if (w >= 1 && w <= 200) { st.einstellungen.tagesziel = w; await sichereLernstand(); zeigeFortschritt(); } else ev.target.value = st.einstellungen.tagesziel;
+  });
+  $("#f-spiel").addEventListener("change", async (ev) => { st.einstellungen.spielelemente = ev.target.checked; await sichereLernstand(); zeigeFortschritt(); });
+  $("#f-export").addEventListener("click", () => ladeHerunter(`lernstand-${heuteIso()}.json`, { art: "phl-lernstand", erstellt_am: new Date().toISOString(), ...st }));
+  $("#f-import").addEventListener("change", async (ev) => {
+    const datei = ev.target.files[0]; if (!datei) return;
+    let d; try { d = JSON.parse(await datei.text()); } catch { return zeigeFortschritt("Die Datei ist kein gültiges JSON."); }
+    if (d?.art !== "phl-lernstand") return zeigeFortschritt("Das ist keine Lernstand-Datei (erwartet: „art“: „phl-lernstand“).");
+    const e = fuehreZusammen(st, d);
+    await sichereLernstand();
+    zeigeFortschritt(`Import: ${e.uebernommen} Fragen übernommen${e.ungueltig ? `, ${e.ungueltig} unvollständige übersprungen` : ""}.`);
+  });
+  $("#f-reset").addEventListener("click", async () => {
+    if (!confirm(`Den gesamten Lernstand in diesem Browser löschen (${Object.keys(st.karten).length} Fragen mit Verlauf)? Das lässt sich nur mit einem vorher exportierten Lernstand rückgängig machen.`)) return;
+    lernstand = leererStand(); lernstand.einstellungen = st.einstellungen; await sichereLernstand();
+    zeigeFortschritt("Lernstand zurückgesetzt.");
+  });
+}
+const konzeptLink = (n, id) => `<a href="#/netz/${encodeURIComponent(id)}" data-kid="${esc(id)}">${esc(n.konzeptNamen[id] || id)}</a>`;
+
+function satz(n, x, bib) {
+  if (x.typ === "konzepte") return `Konzept ${konzeptLink(n, x.id)}`;
+  if (x.typ === "fragen") return `<strong>${esc(x.frage)}</strong> <span class="leise" style="font-size:13px">(${x.typ_frage === "auswahl" ? "Auswahlfrage" : "Karteikarte"} · ${x.konzepte.map((id) => konzeptLink(n, id)).join(", ")})</span>`;
+  if (x.typ === "beziehungen") return `${konzeptLink(n, x.von)} <em>${esc(BEZ[x.art] || x.art)}</em> ${konzeptLink(n, x.nach)}`;
+  const e = bib?.[x.bibliothek];
+  return `„${esc(e ? e.titel : x.bibliothek)}“ <em>${esc(LIT_ART[x.art] || x.art)}</em> ${konzeptLink(n, x.konzept)}`;
+}
+
+function egoGraph(n, k, kanten) {
+  // kanten: Beziehungen, an denen k beteiligt ist. Ein Knoten pro Nachbar, eine Linie pro Beziehung.
+  const nachbarn = [...new Set(kanten.map((b) => (b.von === k.id ? b.nach : b.von)))];
+  const m = nachbarn.length;
+  if (!m) return `<p class="leise">Keine Beziehungen zu anderen Konzepten.</p>`;
+  const W = m > 10 ? 960 : 820, H = m > 10 ? 660 : m > 5 ? 500 : 400, cx = W / 2, cy = H / 2, rx = W / 2 - 120, ry = H / 2 - 36;
+  // Bei vielen Nachbarn abwechselnd innen und außen, damit sich die Beschriftungen nicht überlappen.
+  const pos = Object.fromEntries(nachbarn.map((id, i) => {
+    const w = -Math.PI / 2 + (Math.PI / m) + (2 * Math.PI * i) / m, f = m > 8 && i % 2 ? 0.68 : 1;
+    return [id, [cx + f * rx * Math.cos(w), cy + f * ry * Math.sin(w)]]; }));
+  pos[k.id] = [cx, cy];
+  const vorschlagKonzept = Object.fromEntries(n.konzepte.map((x) => [x.id, x.herkunft === "vorschlag"]));
+  let linien = "", labels = "";
+  for (const id of nachbarn) {
+    const liste = kanten.filter((b) => b.von === id || b.nach === id);
+    liste.forEach((b, j) => {
+      const [x1, y1] = pos[b.von], [x2, y2] = pos[b.nach];
+      const len = Math.hypot(x2 - x1, y2 - y1) || 1, ox = (-(y2 - y1) / len) * (j - (liste.length - 1) / 2) * 14, oy = ((x2 - x1) / len) * (j - (liste.length - 1) / 2) * 14;
+      const p = (t) => [x1 + (x2 - x1) * t + ox, y1 + (y2 - y1) * t + oy];
+      // Pfeilspitze auf dem Weg zum Ziel; der Text sitzt näher am Nachbarn, damit er sich in der Mitte nicht stapelt.
+      const aus = b.von === k.id, tPfeil = aus ? 0.4 : 0.6, tText = aus ? 0.66 : 0.34;
+      const [ax, ay] = p(tPfeil), [lx, ly] = p(tText);
+      linien += `<polyline class="kante ${b.status} ${b.herkunft}" points="${x1 + ox},${y1 + oy} ${ax},${ay} ${x2 + ox},${y2 + oy}" marker-mid="url(#pf-${b.status})"><title>${esc((n.konzeptNamen[b.von] || b.von) + " " + (BEZ[b.art] || b.art) + " " + (n.konzeptNamen[b.nach] || b.nach))} · ${b.herkunft === "vorschlag" ? "Vorschlag (KI-Ergänzung)" : "aus dem Dokument"}</title></polyline>`;
+      labels += `<text class="klabel" x="${lx}" y="${ly}" text-anchor="middle" dy="-3">${esc(BEZ[b.art] || b.art)}</text>`;
+    });
+  }
+  const kurz = (t) => (t.length > 26 ? t.slice(0, 25) + "…" : t);
+  const knoten = (id, mitte) => {
+    const [x, y] = pos[id];
+    const g = `<g class="knoten ${mitte ? "mitte" : ""} ${vorschlagKonzept[id] ? "vorschlag" : ""}"><rect rx="6"></rect><text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central">${esc(kurz(n.konzeptNamen[id] || id))}</text></g>`;
+    return mitte ? g : `<a href="#/netz/${encodeURIComponent(id)}" data-kid="${esc(id)}" aria-label="${esc((n.konzeptNamen[id] || id) + ": " + (konzeptInfo[id]?.beschreibung || ""))}">${g}</a>`;
+  };
+  const pfeil = (s) => `<marker id="pf-${s}" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path class="pf-${s}" d="M0,1 L10,5 L0,9 z"></path></marker>`;
+  return `<div class="graph"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Beziehungen von ${esc(k.name)}">
+    <defs>${["geprueft", "ki-entwurf", "abgelehnt"].map(pfeil).join("")}</defs>
+    ${linien}${labels}${nachbarn.map((id) => knoten(id, false)).join("")}${knoten(k.id, true)}</svg></div>`;
+}
+function rahmeKnoten() {
+  document.querySelectorAll(".graph .knoten").forEach((g) => {
+    const t = g.querySelector("text").getBBox(), r = g.querySelector("rect");
+    r.setAttribute("x", t.x - 8); r.setAttribute("y", t.y - 5); r.setAttribute("width", t.width + 16); r.setAttribute("height", t.height + 10);
+  });
+}
+const legende = `<div class="legende">
+  <span><svg width="34" height="10"><line x1="0" y1="5" x2="34" y2="5" class="kante ki-entwurf"/></svg>aus dem Dokument (mit Folienbeleg)</span>
+  <span><svg width="34" height="10"><line x1="0" y1="5" x2="34" y2="5" class="kante ki-entwurf vorschlag"/></svg>Vorschlag (KI-Ergänzung, mit Begründung)</span>
+  <span><svg width="34" height="10"><line x1="0" y1="5" x2="34" y2="5" class="kante geprueft"/></svg>von dir geprüft</span></div>`;
+
+let netzAbgelehnte = false;
+async function zeigeNetz(id) {
+  const [n, bibDaten] = await Promise.all([ladeNetz(), holen("/api/bibliothek")]);
+  if (!n.vorhanden) { $("#haupt").innerHTML = `<h1>Wissensnetz</h1><p>Noch kein Wissensnetz vorhanden (<code>_lerntool/netz/wissensnetz.json</code>).</p>`; return; }
+  const bib = Object.fromEntries(bibDaten.eintraege.map((e) => [e.id, e]));
+  const sichtbarN = (x) => netzAbgelehnte || x.status !== "abgelehnt";
+  if (!id) {
+    const grad = {};
+    for (const b of n.beziehungen.filter(sichtbarN)) { grad[b.von] = (grad[b.von] || 0) + 1; grad[b.nach] = (grad[b.nach] || 0) + 1; }
+    const zaehl = (liste, h) => liste.filter((x) => x.herkunft === h).length;
+    const render = (q) => {
+      const ql = q.trim().toLocaleLowerCase("de");
+      const liste = n.konzepte.filter(sichtbarN).filter((k) => !ql || [k.name, ...(k.synonyme || []), k.beschreibung].join(" ").toLocaleLowerCase("de").includes(ql))
+        .sort((a, b) => a.name.localeCompare(b.name, "de"));
+      $("#konzepte").innerHTML = `<p class="leise">${liste.length} Konzepte</p><ul class="konzeptliste">${liste.map((k) =>
+        `<li>${konzeptLink(n, k.id)} <span class="leise" style="font-size:13px">${grad[k.id] || 0}</span>${k.herkunft === "vorschlag" ? ' <span class="chip vorschlag">Vorschlag</span>' : ""}${k.status === "abgelehnt" ? ' <span class="chip rot">abgelehnt</span>' : ""}<div class="kdef">${esc(k.beschreibung)}</div></li>`).join("")}</ul>`;
+    };
+    $("#haupt").innerHTML = `<h1>Wissensnetz</h1>
+      <div class="karten">
+        <div class="karte"><div class="zahl">${n.konzepte.length}</div><div class="leise">Konzepte (${zaehl(n.konzepte, "vorschlag")} Vorschläge)</div></div>
+        <div class="karte"><div class="zahl">${n.beziehungen.length}</div><div class="leise">Beziehungen (${zaehl(n.beziehungen, "vorschlag")} Vorschläge)</div></div>
+        <div class="karte"><div class="zahl">${n.literatur.length}</div><div class="leise">Literaturverknüpfungen (${zaehl(n.literatur, "vorschlag")} Vorschläge)</div></div>
+        <div class="karte"><div class="zahl">${n.alle.filter((x) => x.status === "geprueft").length}</div><div class="leise">davon von dir geprüft</div></div>
+      </div>
+      <div class="filter"><input id="k-suche" type="search" placeholder="Konzept suchen …" aria-label="Konzept suchen" autocomplete="off">
+        <label><input type="checkbox" id="k-abgelehnt" ${netzAbgelehnte ? "checked" : ""}> abgelehnte zeigen</label></div>
+      <div id="konzepte"></div>`;
+    $("#k-suche").addEventListener("input", (ev) => render(ev.target.value));
+    $("#k-abgelehnt").addEventListener("change", (ev) => { netzAbgelehnte = ev.target.checked; zeigeNetz(); });
+    render("");
+    return;
+  }
+  const k = n.konzepte.find((x) => x.id === id);
+  if (!k) { $("#haupt").innerHTML = `<h1>Konzept nicht gefunden</h1><p><a href="#/netz">Zur Übersicht</a></p>`; return; }
+  document.title = k.name + " – PH-Lerntool";
+  const [fragen, st] = await Promise.all([ladeFragen(), ladeLernstand()]);
+  if (!st.gesehen[id]) { st.gesehen[id] = heuteIso(); await sichereLernstand(); }
+  const eigeneFragen = fragen.filter(frageAktiv).filter((q) => q.konzepte.includes(id));
+  const kanten = n.beziehungen.filter((b) => (b.von === id || b.nach === id) && sichtbarN(b));
+  const lit = n.literatur.filter((l) => l.konzept === id && sichtbarN(l));
+  const erklaerung = (x) => `${x.belege?.length ? `<div class="belegzeile">Beleg: ${belegLinks(x.belege)}</div>` : ""}
+    ${x.herkunft === "vorschlag" ? `<div class="begruendung"><strong>Begründung:</strong> ${esc(x.begruendung)}${x.quelle ? `<br><strong>Quelle:</strong> ${esc(x.quelle)}` : ""}</div>` : ""}
+    ${x.freigabe?.notiz ? `<div class="belegzeile">Deine Notiz: ${esc(x.freigabe.notiz)}</div>` : ""}`;
+  const chips = (x) => `${herkunftChip(x.herkunft, x)} ${statusChipN(x.status)}${lokalChip(x.id)}`;
+  $("#haupt").innerHTML = `<p class="leise" style="margin:0 0 6px"><a href="#/netz">Wissensnetz</a></p>
+    <h1>${esc(k.name)}</h1>
+    <div class="meta">${(k.synonyme || []).length ? `<span>auch: ${esc(k.synonyme.join(", "))}</span>` : ""}<span>${chips(k)}</span>
+      <span>Lernstufe ${stufeChip(stufe(id, eigeneFragen, st))}</span>
+      <span>${eigeneFragen.length ? `${eigeneFragen.length} Lernfrage${eigeneFragen.length > 1 ? "n" : ""} · <a href="#/lernen/konzept/${encodeURIComponent(id)}">lernen</a>` : "keine Lernfragen"}</span></div>
+    <h2 style="margin-top:18px">Kurzdefinition</h2><p>${esc(k.beschreibung)}</p>${erklaerung(k)}
+    <h2 style="margin-top:20px">In den Unterlagen</h2><div id="k-unterlagen"><p class="leise">wird geladen …</p></div>
+    <h2 style="margin-top:20px">Beziehungen</h2>${legende}
+    <label class="leise" style="font-size:14px"><input type="checkbox" id="k-abgelehnt" ${netzAbgelehnte ? "checked" : ""}> abgelehnte zeigen</label>
+    ${egoGraph(n, k, kanten)}
+    ${kanten.map((b) => `<div class="eintrag ${b.herkunft === "vorschlag" ? "ki" : ""}"><div class="kopfzeile">${satz(n, { ...b, typ: "beziehungen" })}</div>
+      <div class="kopfzeile">${chips(b)}</div>${erklaerung(b)}</div>`).join("")}
+    <h2 style="margin-top:22px">Literatur</h2>
+    ${lit.length ? lit.map((l) => `<div class="eintrag ${l.herkunft === "vorschlag" ? "ki" : ""}"><div class="kopfzeile">${satz(n, { ...l, typ: "literatur" }, bib)}</div>
+      <div class="belegzeile">${esc((bib[l.bibliothek]?.autor_innen || []).join(", "))}${bib[l.bibliothek]?.jahr ? ` (${bib[l.bibliothek].jahr})` : ""} · <a href="#/bibliothek">in der Bibliothek</a></div>
+      <div class="kopfzeile">${chips(l)}</div>${erklaerung(l)}</div>`).join("") : `<p class="leise">Keine Literatur verknüpft.</p>`}`;
+  $("#k-abgelehnt").addEventListener("change", (ev) => { netzAbgelehnte = ev.target.checked; zeigeNetz(id); });
+  rahmeKnoten();
+  let liste = [];
+  try { liste = unterlagenZu(k, await ladeWissen()); } catch { /* ohne Gliederungen bleibt der Abschnitt leer */ }
+  const ziel = $("#k-unterlagen"); if (!ziel) return; // inzwischen andere Seite
+  ziel.innerHTML = liste.length ? `<ul>${liste.map((e) => `<li>${e.art === "begriff" ? `<strong>${esc(e.titel)}</strong>: ` : ""}${esc(e.text)}
+      <div class="belegzeile">${esc(LK_ART[e.art])}${e.abschnitt ? " · " + esc(e.abschnitt) : ""} · ${belegLinks(e.belege)}${e.herkunft === "ki-ergaenzung" ? ` · <span class="chip vorschlag">KI-Ergänzung${e.quelle ? ", Quelle: " + esc(e.quelle) : ", " + esc(e.pruefstatus || "ungeprüft")}</span>` : ""}</div></li>`).join("")}</ul>`
+    : `<p class="leise">Keine Aussage in den Gliederungen gefunden. Die Belege oben führen zu den Folien.</p>`;
+}
+
+let wissenFilter = { q: "", art: "", kurs: "", herkunft: "", status: "" };
+async function zeigeWissen() {
+  const daten = await holen("/api/wissen");
+  const alle = daten.eintraege;
+  const werte = (f) => [...new Set(alle.flatMap((e) => (f === "kurs" ? e.kurse : [e[f]])))].filter(Boolean).sort((a, b) => a.localeCompare(b, "de"));
+  const opt = (f, beschr) => werte(f).map((v) => `<option value="${esc(v)}" ${wissenFilter[f] === v ? "selected" : ""}>${esc(beschr ? beschr(v) : v)}</option>`).join("");
+  $("#haupt").innerHTML = `<h1>Wissen</h1>
+    <div class="filter">
+      <input id="w-q" type="search" placeholder="Durchsuchen …" aria-label="Wissen durchsuchen" value="${esc(wissenFilter.q)}" autocomplete="off">
+      <select id="w-art" aria-label="Art"><option value="">alle Arten</option>${opt("art", (v) => W_ART[v] || v)}</select>
+      <select id="w-kurs" aria-label="Kurs"><option value="">alle Kurse</option>${opt("kurs")}</select>
+      <select id="w-herkunft" aria-label="Herkunft"><option value="">jede Herkunft</option>${opt("herkunft", (v) => (W_HERKUNFT[v] || [v])[0])}</select>
+      <select id="w-status" aria-label="Status"><option value="">jeder Status</option>${opt("status", (v) => (N_STATUS[v] || [v])[0])}</select>
+    </div><div id="w-liste"></div>`;
+  const render = () => {
+    const f = wissenFilter, worte = f.q.trim().toLocaleLowerCase("de").split(/\s+/).filter(Boolean);
+    const liste = alle.filter((e) => (!f.art || e.art === f.art) && (!f.kurs || e.kurse.includes(f.kurs)) && (!f.herkunft || e.herkunft === f.herkunft)
+      && (f.status ? e.status === f.status : e.status !== "abgelehnt")
+      && worte.every((w) => [e.titel, e.text, ...(e.synonyme || []), e.abschnitt || ""].join(" ").toLocaleLowerCase("de").includes(w)));
+    const re = worte.length ? new RegExp(`(${worte.map((w) => esc(w).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`, "gi") : null;
+    const mark = (t) => (re ? esc(t).replace(re, "<mark>$1</mark>") : esc(t));
+    const zeigen = liste.slice(0, 200);
+    $("#w-liste").innerHTML = `<p class="leise">${liste.length} von ${alle.length} Einträgen${liste.length > 200 ? ", die ersten 200 angezeigt" : ""}</p>
+      ${zeigen.map((e) => `<div class="eintrag ${e.herkunft === "ki-ergaenzung" || e.herkunft === "vorschlag" ? "ki" : ""}">
+        <div class="kopfzeile"><span class="chip">${esc(W_ART[e.art] || e.art)}</span>${herkunftChip(e.herkunft, e)}${statusChipN(e.status)}
+          ${e.kurse.map((k) => `<span class="leise" style="font-size:13px">${esc(k)}</span>`).join(" ")}</div>
+        ${e.titel ? `<div><strong>${e.art === "konzept" ? `<a href="#/netz/${encodeURIComponent(e.konzept)}">${mark(e.titel)}</a>` : mark(e.titel)}</strong>${e.synonyme?.length ? ` <span class="leise">(${mark(e.synonyme.join(", "))})</span>` : ""}</div>` : ""}
+        <div>${mark(e.text)}</div>
+        ${e.begruendung ? `<div class="begruendung"><strong>Begründung:</strong> ${esc(e.begruendung)}</div>` : ""}
+        <div class="belege">${e.abschnitt ? esc(e.abschnitt) + " · " : ""}${belegLinks(e.belege)}${e.art === "literatur" ? ' · <a href="#/bibliothek">Bibliothek</a>' : ""}</div></div>`).join("")}`;
+  };
+  $("#w-q").addEventListener("input", (ev) => { wissenFilter.q = ev.target.value; render(); });
+  for (const k of ["art", "kurs", "herkunft", "status"]) $("#w-" + k).addEventListener("change", (ev) => { wissenFilter[k] = ev.target.value; render(); });
+  render();
+}
+
+let freigabeAnsicht = "vorschlaege";
+async function zeigeFreigabe() {
+  const [n, bibDaten, fragen] = await Promise.all([ladeNetz(), holen("/api/bibliothek"), ladeFragen()]);
+  const bib = Object.fromEntries(bibDaten.eintraege.map((e) => [e.id, e]));
+  const f = freigaben();
+  const offen = (x) => x.status === "ki-entwurf";
+  // Lernfragen: "typ" ist dort karte/auswahl, deshalb als typ_frage mitführen.
+  const fr = fragen.map((q) => ({ ...q, typ_frage: q.typ, typ: "fragen" }));
+  const gesamt = [...n.alle, ...fr];
+  const auswahl = {
+    vorschlaege: n.alle.filter((x) => x.herkunft === "vorschlag" && offen(x)),
+    fragen: fr.filter(offen),
+    alle: gesamt.filter(offen),
+    entschieden: gesamt.filter((x) => f[x.id]),
+  }[freigabeAnsicht];
+  const anzahlLokal = Object.keys(f).length;
+  const karte = (x) => {
+    const e = f[x.id];
+    return `<div class="eintrag ${x.herkunft === "vorschlag" ? "ki" : ""}" data-id="${esc(x.id)}">
+      <div class="kopfzeile"><span class="chip">${esc(TYP_NAME[x.typ])}</span>${herkunftChip(x.herkunft, x)}${statusChipN(x.status)}</div>
+      <div>${satz(n, x, bib)}</div>
+      ${x.typ === "konzepte" ? `<div class="leise">${esc(x.beschreibung)}</div>` : ""}
+      ${x.typ === "fragen" ? frageDetails({ ...x, typ: x.typ_frage }) + (x.typ_frage === "auswahl" ? `<div class="belegzeile">${x.herkunft === "pruefungsblatt" ? "Frage und Möglichkeiten stammen vom Prüfungsblatt; die Erklärungen sind aus den Folien verdichtet." : "Die falschen Möglichkeiten und ihre Erklärungen sind von der KI formuliert."}</div>` : "") : ""}
+      ${x.belege?.length ? `<div class="belegzeile">Beleg: ${belegLinks(x.belege)}</div>` : ""}
+      ${x.herkunft === "vorschlag" ? `<div class="begruendung"><strong>Begründung der KI:</strong> ${esc(x.begruendung)}</div>` : ""}
+      <input class="notiz" type="text" placeholder="Notiz (optional), z. B. woher du es weißt" aria-label="Notiz (optional)" value="${esc(e?.notiz || "")}" data-notiz="${esc(x.id)}">
+      <div class="aktionen">
+        <button class="knopf ${e?.entscheidung === "angenommen" ? "an-gruen" : ""}" data-aktion="angenommen" data-id="${esc(x.id)}">Annehmen</button>
+        <button class="knopf ${e?.entscheidung === "abgelehnt" ? "an-rot" : ""}" data-aktion="abgelehnt" data-id="${esc(x.id)}">Ablehnen</button>
+        ${e ? `<button class="knopf" data-aktion="zuruecknehmen" data-id="${esc(x.id)}">Zurücknehmen</button><span class="leise" style="font-size:13px">entschieden am ${esc(e.am)}, noch nicht übernommen</span>` : ""}
+      </div></div>`;
+  };
+  $("#haupt").innerHTML = `<h1>Freigabe</h1>
+    <p class="leise">Entscheidungen bleiben in diesem Browser. Exportieren, dann im Ordner <code>ph-lernapp</code>: <code>python -m phl netz freigeben &lt;Datei&gt;</code></p>
+    ${speicherOk ? "" : `<div class="hinweis">Der Browser erlaubt hier keinen lokalen Speicher. Entscheidungen gehen beim Neuladen verloren, also vorher exportieren.</div>`}
+    <div class="filter">
+      <select id="fr-ansicht" aria-label="Ansicht">
+        <option value="vorschlaege" ${freigabeAnsicht === "vorschlaege" ? "selected" : ""}>offene Vorschläge (KI-Ergänzungen)</option>
+        <option value="fragen" ${freigabeAnsicht === "fragen" ? "selected" : ""}>offene Lernfragen</option>
+        <option value="alle" ${freigabeAnsicht === "alle" ? "selected" : ""}>alle ungeprüften Einträge</option>
+        <option value="entschieden" ${freigabeAnsicht === "entschieden" ? "selected" : ""}>von dir entschieden, noch nicht übernommen</option>
+      </select>
+      <span class="leise">${auswahl.length} Einträge · ${anzahlLokal} Entscheidungen in diesem Browser</span>
+      <button class="knopf primaer" id="fr-export" ${anzahlLokal ? "" : "disabled"}>Entscheidungen exportieren</button>
+      <button class="knopf" id="fr-verwerfen" ${anzahlLokal ? "" : "disabled"}>Alle verwerfen</button>
+    </div>
+    ${auswahl.length ? auswahl.map(karte).join("") : `<p>Nichts offen.</p>`}`;
+  $("#fr-ansicht").addEventListener("change", (ev) => { freigabeAnsicht = ev.target.value; zeigeFreigabe(); });
+  $("#fr-export").addEventListener("click", () => {
+    const heute = new Date().toLocaleDateString("sv-SE");
+    const datei = { art: "phl-freigaben", erstellt_am: new Date().toISOString(), netz_stand: n.stand,
+      entscheidungen: Object.entries(freigaben()).map(([id, e]) => ({ id, ...e })) };
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(datei, null, 2)], { type: "application/json" }));
+    a.download = `freigaben-${heute}.json`; document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+  $("#fr-verwerfen").addEventListener("click", () => {
+    if (confirm(`${anzahlLokal} noch nicht übernommene Entscheidungen in diesem Browser löschen?`)) { freigabenSpeicher = {}; sichereFreigaben(); zeigeFreigabe(); }
+  });
+  $("#haupt").querySelectorAll("[data-aktion]").forEach((b) => b.addEventListener("click", () => {
+    const id = b.dataset.id, fr = freigaben();
+    if (b.dataset.aktion === "zuruecknehmen") delete fr[id];
+    else {
+      const notiz = $("#haupt").querySelector(`[data-notiz="${CSS.escape(id)}"]`).value.trim();
+      fr[id] = { entscheidung: b.dataset.aktion, am: new Date().toLocaleDateString("sv-SE"), ...(notiz ? { notiz } : {}) };
+    }
+    sichereFreigaben();
+    const y = window.scrollY; zeigeFreigabe().then(() => window.scrollTo(0, y));
+  }));
+  $("#haupt").querySelectorAll("[data-notiz]").forEach((i) => i.addEventListener("change", () => {
+    const fr = freigaben(), e = fr[i.dataset.notiz];
+    if (e) { if (i.value.trim()) e.notiz = i.value.trim(); else delete e.notiz; sichereFreigaben(); }
+  }));
+}
+
+async function zeigeSuche(q) {
+  $("#suche").value = q;
+  const e = await holen("/api/suche?q=" + encodeURIComponent(q));
+  const begriffe = q.split(/\s+/).filter((b) => b.length >= 2).map((b) => b.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const markiere = (t) => begriffe.length ? esc(t).replace(new RegExp(`(${begriffe.map(esc).join("|")})`, "gi"), "<mark>$1</mark>") : esc(t);
+  $("#haupt").innerHTML = `<h1>Suche: „${esc(q)}“</h1>
+    <p class="leise">${e.treffer.length >= 150 ? "Mehr als 150" : e.treffer.length} Treffer. Gesucht wird nach Wortanfängen, alle Wörter müssen auf derselben Seite stehen.</p>
+    ${e.treffer.length ? "" : `<p>Nichts gefunden. Versuch es so:</p><ul class="tipps"><li>ein Wort weniger oder nur den Wortanfang (z. B. „Präval“ statt „Prävalenzrate“)</li><li>die andere Sprache, viele Folien sind englisch (z. B. „incidence“)</li><li>in <a href="#/wissen">Wissen</a>, im <a href="#/netz">Wissensnetz</a> oder bei den <a href="#/formeln">Formeln</a> nachsehen</li></ul>`}
+    ${e.treffer.map((t) => `<div class="treffer"><a href="#/einheit/${encodeURIComponent(t.einheit)}/${t.seite}">${esc(t.kurs)} · ${esc(t.datei)}, S. ${t.seite}</a>
+      <div>${markiere(t.ausschnitt)}</div></div>`).join("")}`;
+}
+
+// ---------- Landkarte ----------
+// Alle Konzepte und Beziehungen des Wissensnetzes auf einer Fläche. Die Anordnung rechnet der Browser selbst aus (Kräftemodell, ohne Zufall),
+// sie bedeutet nur „verbundene Konzepte liegen nah beieinander“. Es steht nichts darauf, was nicht im Netz steht.
+function layoutKraefte(ids, kanten, breite, W, H) {
+  const n = ids.length, idx = Object.fromEntries(ids.map((id, i) => [id, i]));
+  const pos = ids.map((_, i) => [W / 2 + 0.38 * W * Math.cos((2 * Math.PI * i) / n), H / 2 + 0.38 * H * Math.sin((2 * Math.PI * i) / n)]);
+  const paare = kanten.filter((e) => idx[e.von] != null && idx[e.nach] != null && e.von !== e.nach).map((e) => [idx[e.von], idx[e.nach]]);
+  const k = Math.sqrt((W * H) / Math.max(n, 1)) * 0.85;
+  for (let it = 0; it < 400; it++) {
+    const t = 1 - it / 400, dp = pos.map(() => [0, 0]);
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+      const dx = pos[i][0] - pos[j][0], dy = pos[i][1] - pos[j][1], d = Math.max(Math.hypot(dx, dy), 0.5), f = (k * k) / d;
+      dp[i][0] += (dx / d) * f; dp[i][1] += (dy / d) * f; dp[j][0] -= (dx / d) * f; dp[j][1] -= (dy / d) * f;
+    }
+    for (const [a, b] of paare) {
+      const dx = pos[a][0] - pos[b][0], dy = pos[a][1] - pos[b][1], d = Math.max(Math.hypot(dx, dy), 0.5), f = (d * d) / k;
+      dp[a][0] -= (dx / d) * f; dp[a][1] -= (dy / d) * f; dp[b][0] += (dx / d) * f; dp[b][1] += (dy / d) * f;
+    }
+    for (let i = 0; i < n; i++) {
+      dp[i][0] += (W / 2 - pos[i][0]) * 0.3; dp[i][1] += (H / 2 - pos[i][1]) * 0.3; // schwache Mitte, hält Einzelne im Bild
+      const l = Math.hypot(dp[i][0], dp[i][1]) || 1, s = Math.min(l, 60 * t + 2);
+      pos[i][0] = Math.min(W - breite[i] / 2 - 8, Math.max(breite[i] / 2 + 8, pos[i][0] + (dp[i][0] / l) * s));
+      pos[i][1] = Math.min(H - 24, Math.max(24, pos[i][1] + (dp[i][1] / l) * s));
+    }
+  }
+  // Beschriftungen dürfen sich nicht überdecken: Kästen auseinanderschieben.
+  for (let r = 0; r < 60; r++) {
+    let bewegt = false;
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+      const ox = (breite[i] + breite[j]) / 2 + 10 - Math.abs(pos[i][0] - pos[j][0]), oy = 34 - Math.abs(pos[i][1] - pos[j][1]);
+      if (ox > 0 && oy > 0) {
+        bewegt = true;
+        if (oy < ox) { const s = (pos[i][1] <= pos[j][1] ? -1 : 1) * oy / 2; pos[i][1] += s; pos[j][1] -= s; }
+        else { const s = (pos[i][0] <= pos[j][0] ? -1 : 1) * ox / 2; pos[i][0] += s; pos[j][0] -= s; }
+      }
+    }
+    for (let i = 0; i < n; i++) { pos[i][0] = Math.min(W - breite[i] / 2 - 4, Math.max(breite[i] / 2 + 4, pos[i][0])); pos[i][1] = Math.min(H - 18, Math.max(18, pos[i][1])); }
+    if (!bewegt) break;
+  }
+  // Was sich danach noch überdeckt, kommt auf den nächsten freien Platz (Suche in Ringen um die alte Stelle).
+  const platziert = new Array(n).fill(false);
+  const frei = (i, x, y) => {
+    if (x < breite[i] / 2 + 4 || x > W - breite[i] / 2 - 4 || y < 18 || y > H - 18) return false;
+    for (let j = 0; j < n; j++) if (platziert[j] && Math.abs(x - pos[j][0]) < (breite[i] + breite[j]) / 2 + 6 && Math.abs(y - pos[j][1]) < 32) return false;
+    return true;
+  };
+  for (let i = 0; i < n; i++) {
+    if (!frei(i, pos[i][0], pos[i][1])) {
+      suche: for (let ring = 1; ring < 120; ring++) for (let a = 0; a < 8 * ring; a++) {
+        const w = (2 * Math.PI * a) / (8 * ring), x = pos[i][0] + Math.cos(w) * ring * 16, y = pos[i][1] + Math.sin(w) * ring * 16;
+        if (frei(i, x, y)) { pos[i] = [x, y]; break suche; }
+      }
+    }
+    platziert[i] = true;
+  }
+  return Object.fromEntries(ids.map((id, i) => [id, pos[i]]));
+}
+
+// Zoom und Vollbild der Landkarte: Der Ausschnitt ist das viewBox-Rechteck, Zoom und Verschieben ändern nur dieses.
+function landkarteZoom(box, W, H) {
+  const svg = box.querySelector("svg"), hinweis = box.querySelector("#lk-hinweis");
+  let v = { x: 0, y: 0, w: W, h: H };
+  const MIN = 0.06, MAX = 1; // kleinster Ausschnitt 6 % der Karte, größter die ganze Karte
+  const voll = () => document.fullscreenElement === box || box.classList.contains("vollbild");
+  let geplant = false;
+  const setze = () => { svg.setAttribute("viewBox", `${v.x} ${v.y} ${v.w} ${v.h}`); if (!geplant) { geplant = true; requestAnimationFrame(() => { geplant = false; anwenden(); }); } };
+  const begrenze = () => {
+    v.w = Math.min(W, Math.max(W * MIN, v.w)); v.h = v.w * (H / W);
+    v.x = Math.min(W - v.w, Math.max(0, v.x)); v.y = Math.min(H - v.h, Math.max(0, v.y));
+  };
+  // Bildschirmpunkt → Kartenpunkt; bei „meet“-Skalierung kann Rand frei bleiben, deshalb über die tatsächliche Skala
+  const geom = () => {
+    const r = svg.getBoundingClientRect(), sk = Math.min(r.width / v.w, r.height / v.h);
+    if (!(sk > 0)) return null; // nicht sichtbar (z. B. Tab im Hintergrund): nichts rechnen
+    return { r, sk, ox: r.left + (r.width - v.w * sk) / 2, oy: r.top + (r.height - v.h * sk) / 2 };
+  };
+  const zoomUm = (faktor, cx, cy) => { // cx, cy in Bildschirmkoordinaten (oder null = Mitte)
+    const g = geom(); if (!g) return; if (cx == null) { cx = g.r.left + g.r.width / 2; cy = g.r.top + g.r.height / 2; }
+    const kx = v.x + (cx - g.ox) / g.sk, ky = v.y + (cy - g.oy) / g.sk, w0 = v.w;
+    v.w = w0 * faktor; begrenze();
+    const f = v.w / w0; v.x = kx - (kx - v.x) * f; v.y = ky - (ky - v.y) * f; begrenze(); setze();
+  };
+  // Im Vollbild bleiben Kästen und Schrift auf dem Bildschirm gleich groß (Lesbarkeit), nur die Abstände wachsen und schrumpfen mit dem Zoom.
+  // Was sich beim Herauszoomen überdecken würde, wird nicht beschriftet: wichtige (viel verbundene) Konzepte zuerst, beim Hineinzoomen kommen die übrigen dazu.
+  const pos = new Map(), knoten = [...svg.querySelectorAll("a[data-id]")].map((a) => {
+    const g = a.querySelector("g"), t = g.querySelector("text"), r = g.querySelector("rect");
+    const k = { id: a.dataset.id, g, px: +t.getAttribute("x"), py: +t.getAttribute("y"), bw: +r.getAttribute("width"), bh: +r.getAttribute("height"), blass: g.classList.contains("blass"), grad: 0 };
+    pos.set(k.id, k); return k;
+  });
+  const linien = [...svg.querySelectorAll("line.kante[data-von]")].map((l) => ({ l, von: pos.get(l.dataset.von), nach: pos.get(l.dataset.nach), alt: ["x1", "y1", "x2", "y2"].map((a) => l.getAttribute(a)), op: l.style.opacity }));
+  for (const e of linien) { if (e.von) e.von.grad++; if (e.nach) e.nach.grad++; }
+  const reihe = [...knoten].sort((a, b) => a.blass - b.blass || b.grad - a.grad);
+  const zaehl = box.querySelector("#lk-zaehl");
+  const anwenden = () => {
+    // Auch im normalen Fenster: Kästen in Bildschirmgröße, Überdecktes bleibt bis zum Hineinzoomen unbeschriftet.
+    const g = geom(); if (!g) return;
+    const ox = (g.r.width - v.w * g.sk) / 2, oy = (g.r.height - v.h * g.sk) / 2, m = 1 / g.sk, belegt = [];
+    let sichtbar = 0;
+    for (const k of reihe) {
+      k.sx = (k.px - v.x) * g.sk + ox; k.sy = (k.py - v.y) * g.sk + oy;
+      let zeigen = k.sx + k.bw / 2 > 0 && k.sx - k.bw / 2 < g.r.width && k.sy + k.bh / 2 > 0 && k.sy - k.bh / 2 < g.r.height;
+      if (zeigen) zeigen = !belegt.some((b) => Math.abs(k.sx - b.sx) < (k.bw + b.bw) / 2 + 6 && Math.abs(k.sy - b.sy) < (k.bh + b.bh) / 2 + 4);
+      k.da = zeigen; k.g.style.display = zeigen ? "" : "none";
+      if (zeigen) { belegt.push(k); sichtbar++; k.g.setAttribute("transform", `translate(${k.px} ${k.py}) scale(${m}) translate(${-k.px} ${-k.py})`); }
+    }
+    for (const e of linien) {
+      if (!e.von || !e.nach) continue;
+      const a = e.von, b = e.nach, dx = b.px - a.px, dy = b.py - a.py;
+      const rand = (n, vx, vy) => { // Austritt aus dem Kasten (Bildschirmgröße), nur wenn der Kasten gezeichnet wird
+        if (!n.da) return [n.px, n.py];
+        const t = Math.min((n.bw / 2 * m) / (Math.abs(vx) || 1e-6), (n.bh / 2 * m) / (Math.abs(vy) || 1e-6), 1); return [n.px + vx * t, n.py + vy * t];
+      };
+      const [x1, y1] = rand(a, dx, dy), [x2, y2] = rand(b, -dx, -dy);
+      e.l.setAttribute("x1", x1); e.l.setAttribute("y1", y1); e.l.setAttribute("x2", x2); e.l.setAttribute("y2", y2);
+      e.l.style.opacity = a.da && b.da ? "" : ".09"; // Linien zu unbeschrifteten Konzepten bleiben als Hintergrund
+      e.l.style.display = a.da || b.da ? "" : "none";
+    }
+    zaehl.textContent = `${sichtbar} von ${knoten.length} Konzepten beschriftet, hineinzoomen zeigt mehr`;
+  };
+  const hinweisText = () => { hinweis.textContent = "Mausrad: Zoom · Ziehen: verschieben" + (voll() ? " · Esc beendet" : ""); };
+  box.querySelector("#lk-plus").addEventListener("click", () => zoomUm(0.7));
+  box.querySelector("#lk-minus").addEventListener("click", () => zoomUm(1 / 0.7));
+  box.querySelector("#lk-reset").addEventListener("click", () => { v = { x: 0, y: 0, w: W, h: H }; setze(); });
+  const knopf = box.querySelector("#lk-voll");
+  const umschalten = async () => {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else if (box.classList.contains("vollbild")) { box.classList.remove("vollbild"); }
+      else if (box.requestFullscreen) await box.requestFullscreen();
+      else box.classList.add("vollbild");
+    } catch { box.classList.toggle("vollbild"); } // Browser verweigert Vollbild: Ersatz über die ganze Fensterfläche
+    stand();
+  };
+  const stand = () => { knopf.textContent = voll() ? "Vollbild beenden" : "Vollbild"; hinweisText(); requestAnimationFrame(anwenden); };
+  knopf.addEventListener("click", umschalten);
+  const ende = () => stand();
+  document.addEventListener("fullscreenchange", ende); window.addEventListener("resize", ende);
+  const taste = (ev) => {
+    if (ev.key === "Escape" && box.classList.contains("vollbild")) { box.classList.remove("vollbild"); stand(); return; }
+    const pfeil = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[ev.key];
+    if (pfeil && voll() && !/INPUT|SELECT|TEXTAREA/.test(ev.target.tagName)) { ev.preventDefault(); v.x += pfeil[0] * v.w * 0.12; v.y += pfeil[1] * v.h * 0.12; begrenze(); setze(); }
+  };
+  document.addEventListener("keydown", taste);
+  const aufraeumen = new MutationObserver(() => { if (!box.isConnected) { document.removeEventListener("fullscreenchange", ende); window.removeEventListener("resize", ende); document.removeEventListener("keydown", taste); aufraeumen.disconnect(); } });
+  aufraeumen.observe(document.body, { childList: true, subtree: true });
+  svg.addEventListener("wheel", (ev) => {
+    ev.preventDefault(); // auch im normalen Fenster: über der Karte zoomt das Mausrad statt die Seite zu scrollen
+    const zeile = ev.deltaMode === 1 ? 16 : 1; // Zeilen- statt Pixel-Rad
+    if (ev.shiftKey || ev.altKey || (!ev.ctrlKey && Math.abs(ev.deltaX) > Math.abs(ev.deltaY))) { // Verschieben ohne Klicken
+      const g = geom(); if (!g) return;
+      const dx = ev.shiftKey ? (ev.deltaX || ev.deltaY) : ev.altKey ? 0 : ev.deltaX, dy = ev.altKey ? ev.deltaY : 0;
+      v.x += (dx * zeile) / g.sk; v.y += (dy * zeile) / g.sk; begrenze(); setze(); return;
+    }
+    zoomUm(Math.exp(ev.deltaY * zeile * (ev.ctrlKey ? 0.01 : 0.0015)), ev.clientX, ev.clientY); // Strg = Pinch auf dem Trackpad
+  }, { passive: false });
+  // Ziehen (Maus, Stift, Finger) und Zwei-Finger-Zoom
+  const zeiger = new Map(); let bewegt = false, pinch0 = null;
+  svg.addEventListener("pointerdown", (ev) => { zeiger.set(ev.pointerId, { x: ev.clientX, y: ev.clientY }); bewegt = false; pinch0 = null; });
+  svg.addEventListener("pointermove", (ev) => {
+    const p = zeiger.get(ev.pointerId); if (!p) return;
+    const dx = ev.clientX - p.x, dy = ev.clientY - p.y;
+    if (zeiger.size === 2) {
+      const [a, b] = [...zeiger.values()], alt = Math.hypot(a.x - b.x, a.y - b.y);
+      p.x = ev.clientX; p.y = ev.clientY;
+      const [c, d] = [...zeiger.values()], neu = Math.hypot(c.x - d.x, c.y - d.y);
+      if (alt > 0 && neu > 0) zoomUm(alt / neu, (c.x + d.x) / 2, (c.y + d.y) / 2);
+      bewegt = true; return;
+    }
+    if (!bewegt && Math.hypot(dx, dy) < 4) return;
+    if (!bewegt) { bewegt = true; svg.classList.add("zieht"); }
+    const g = geom(); if (!g) return; v.x -= dx / g.sk; v.y -= dy / g.sk; begrenze(); setze();
+    p.x = ev.clientX; p.y = ev.clientY;
+  });
+  const los = (ev) => { zeiger.delete(ev.pointerId); if (!zeiger.size) svg.classList.remove("zieht"); };
+  svg.addEventListener("pointerup", los); svg.addEventListener("pointercancel", los);
+  svg.addEventListener("click", (ev) => { if (bewegt) { ev.preventDefault(); ev.stopPropagation(); bewegt = false; } }, true); // nach dem Ziehen kein Konzept öffnen
+  stand();
+}
+
+// Kurzdefinition beim Darüberfahren über jeden Konzeptlink im Wissensnetz (data-kid)
+(() => {
+  const tipp = document.createElement("div"); tipp.className = "lk-tipp"; tipp.hidden = true; tipp.setAttribute("role", "tooltip");
+  document.addEventListener("DOMContentLoaded", () => document.body.append(tipp));
+  if (document.body) document.body.append(tipp);
+  const zeige = (a, x, y) => {
+    const k = konzeptInfo[a.dataset.kid]; if (!k) { tipp.hidden = true; return; }
+    tipp.innerHTML = `<strong>${esc(k.name)}</strong>${esc(k.beschreibung)}${k.herkunft === "vorschlag" ? '<div class="leise">Vorschlag (KI-Ergänzung)</div>' : ""}`;
+    tipp.hidden = false;
+    const r = tipp.getBoundingClientRect(), w = window.innerWidth, h = window.innerHeight;
+    tipp.style.left = Math.max(8, Math.min(x + 14, w - r.width - 8)) + "px";
+    tipp.style.top = (y + 18 + r.height > h - 8 ? Math.max(8, y - r.height - 12) : y + 18) + "px";
+  };
+  document.addEventListener("pointermove", (ev) => { const a = ev.target.closest?.("[data-kid]"); if (a) zeige(a, ev.clientX, ev.clientY); else tipp.hidden = true; });
+  document.addEventListener("focusin", (ev) => { const a = ev.target.closest?.("[data-kid]"); if (a) { const r = a.getBoundingClientRect(); zeige(a, r.left + r.width / 2, r.bottom - 10); } });
+  document.addEventListener("focusout", () => { tipp.hidden = true; });
+  window.addEventListener("hashchange", () => { tipp.hidden = true; });
+})();
+
+// Landkarte: Kurzdefinition beim Darüberfahren, Steckbrief beim Klick (Inhalt nur aus Wissensnetz und Gliederungen, nichts dazuerfunden)
+let wissenCache = null;
+async function ladeWissen() { return wissenCache ??= (await holen("/api/wissen")).eintraege; }
+const LK_ART = { begriff: "Begriff", kernaussage: "Kernaussage", lernziel: "Lernziel", uebung: "Übung", hinweis: "Hinweis" };
+
+// Aussagen aus den Gliederungen zu einem Konzept: auf den Belegseiten des Konzepts, Nennung des Begriffs zuerst
+function unterlagenZu(k, wissen) {
+  // Name auch ohne Klammerzusatz suchen: „Präventionsgesetz (Deutschland)“ findet „Präventionsgesetz“
+  const woerter = [...new Set([k.name, ...(k.synonyme || [])].flatMap((w) => [w, w.replace(/\s*\([^)]*\)/g, "")]).map((w) => w.trim().toLocaleLowerCase("de")).filter((w) => w.length > 2))];
+  const seiten = new Map((k.belege || []).map((b) => [b.einheit, new Set(b.seiten)]));
+  const treffer = [];
+  for (const e of wissen) {
+    if (e.art === "konzept" || !LK_ART[e.art]) continue;
+    const b = e.belege?.[0]; if (!b) continue;
+    const text = ((e.titel || "") + " " + e.text).toLocaleLowerCase("de");
+    const nennt = woerter.some((w) => text.includes(w));
+    const aufSeite = seiten.get(b.einheit) && b.seiten.some((x) => seiten.get(b.einheit).has(x));
+    if (!nennt && !aufSeite) continue;
+    const begriff = e.art === "begriff" && woerter.includes((e.titel || "").toLocaleLowerCase("de"));
+    treffer.push({ e, rang: (begriff ? 0 : nennt && aufSeite ? 1 : nennt ? 2 : 3) });
+  }
+  treffer.sort((a, b) => a.rang - b.rang);
+  return treffer.filter((t) => t.rang < 3 || treffer.length < 4).slice(0, 6).map((t) => t.e);
+}
+
+function landkarteSteckbrief(box, n, stufen) {
+  const svg = box.querySelector("svg");
+  const tipp = document.createElement("div"); tipp.className = "lk-tipp"; tipp.hidden = true; tipp.setAttribute("role", "tooltip");
+  const brief = document.createElement("section"); brief.className = "lk-steckbrief"; brief.setAttribute("aria-label", "Steckbrief"); brief.hidden = true; brief.setAttribute("aria-live", "polite");
+  box.append(tipp, brief);
+  const konzept = (a) => n.konzepte.find((x) => x.id === a?.dataset.id);
+  const zeigeTipp = (k, x, y) => {
+    tipp.innerHTML = `<strong>${esc(k.name)}</strong>${esc(k.beschreibung)}<div class="leise">Lernstufe: ${esc(STUFE[stufen[k.id]]?.[0] || stufen[k.id])}${k.herkunft === "vorschlag" ? " · Vorschlag (KI-Ergänzung)" : ""} · Klick für mehr</div>`;
+    tipp.hidden = false;
+    const r = tipp.getBoundingClientRect(), w = window.innerWidth, h = window.innerHeight;
+    tipp.style.left = Math.max(8, Math.min(x + 14, w - r.width - 8)) + "px";
+    tipp.style.top = (y + 18 + r.height > h - 8 ? Math.max(8, y - r.height - 12) : y + 18) + "px";
+  };
+  svg.addEventListener("pointermove", (ev) => {
+    if (ev.buttons) { tipp.hidden = true; return; } // beim Ziehen kein Fenster
+    const k = konzept(ev.target.closest?.("a[data-id]"));
+    if (k) zeigeTipp(k, ev.clientX, ev.clientY); else tipp.hidden = true;
+  });
+  svg.addEventListener("pointerleave", () => { tipp.hidden = true; });
+  svg.addEventListener("focusin", (ev) => { const a = ev.target.closest?.("a[data-id]"), k = konzept(a); if (k) { const r = a.getBoundingClientRect(); zeigeTipp(k, r.left + r.width / 2, r.bottom - 10); } });
+  svg.addEventListener("focusout", () => { tipp.hidden = true; });
+  const schliessen = () => { brief.hidden = true; svg.querySelector(".knoten.gewaehlt")?.classList.remove("gewaehlt"); };
+  const oeffnen = async (k, a) => {
+    tipp.hidden = true;
+    svg.querySelector(".knoten.gewaehlt")?.classList.remove("gewaehlt"); a.querySelector(".knoten")?.classList.add("gewaehlt");
+    const nachbarn = n.beziehungen.filter((b) => b.status !== "abgelehnt" && (b.von === k.id || b.nach === k.id));
+    const kopf = `<button type="button" class="zu" aria-label="Steckbrief schließen" title="Schließen (Esc)">×</button>
+      <h3>${esc(k.name)}</h3>
+      <div class="leise">${(k.synonyme || []).length ? `auch: ${esc(k.synonyme.join(", "))} · ` : ""}Lernstufe ${stufeChip(stufen[k.id])}${k.herkunft === "vorschlag" ? ' <span class="chip vorschlag">Vorschlag (KI-Ergänzung)</span>' : ""}</div>
+      <h4>Kurzdefinition</h4><p style="margin:4px 0">${esc(k.beschreibung)}</p>
+      ${k.herkunft === "vorschlag" && k.begruendung ? `<p class="leise" style="margin:4px 0">Begründung: ${esc(k.begruendung)}${k.quelle ? ` · Quelle: ${esc(k.quelle)}` : ""}</p>` : ""}
+      ${k.belege?.length ? `<div class="belegzeile">Belegt in: ${belegLinks(k.belege)}</div>` : ""}`;
+    const fuss = `${nachbarn.length ? `<h4>Verbunden mit</h4><div>${nachbarn.slice(0, 10).map((b) => { const o = b.von === k.id ? b.nach : b.von; return `<a class="chip" href="#/netz/${encodeURIComponent(o)}" data-lk="${esc(o)}">${esc(n.konzeptNamen[o] || o)}</a>`; }).join(" ")}${nachbarn.length > 10 ? ` <span class="leise">+${nachbarn.length - 10}</span>` : ""}</div>` : ""}
+      <h4>Weiter</h4><div><a href="#/netz/${encodeURIComponent(k.id)}">Konzept im Wissensnetz</a> · <a href="#/lernen/konzept/${encodeURIComponent(k.id)}">dazu lernen</a></div>`;
+    brief.innerHTML = kopf + `<h4>In den Unterlagen</h4><p class="leise">wird geladen …</p>` + fuss;
+    brief.hidden = false; brief.scrollTop = 0;
+    let liste = [];
+    try { liste = unterlagenZu(k, await ladeWissen()); } catch { /* ohne Gliederungen bleibt der Steckbrief kürzer */ }
+    if (brief.hidden || !a.querySelector(".knoten.gewaehlt")) return; // inzwischen geschlossen oder anderes Konzept
+    const unterlagen = liste.length ? `<ul>${liste.map((e) => `<li>${e.art === "begriff" ? `<strong>${esc(e.titel)}</strong>: ` : ""}${esc(e.text)}
+        <div class="belegzeile">${esc(LK_ART[e.art])}${e.abschnitt ? " · " + esc(e.abschnitt) : ""} · ${belegLinks(e.belege)}${e.herkunft === "ki-ergaenzung" ? ` · <span class="chip vorschlag">KI-Ergänzung${e.quelle ? ", Quelle: " + esc(e.quelle) : ", " + esc(e.pruefstatus || "ungeprüft")}</span>` : ""}</div></li>`).join("")}</ul>`
+      : `<p class="leise">Keine Aussage in den Gliederungen gefunden. Die Belegseiten oben führen zu den Folien.</p>`;
+    brief.innerHTML = kopf + `<h4>In den Unterlagen</h4>${unterlagen}` + fuss;
+  };
+  svg.addEventListener("click", (ev) => {
+    const a = ev.target.closest?.("a[data-id]"), k = konzept(a);
+    if (!k || ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.button) return; // Strg-Klick öffnet weiterhin die Konzeptseite
+    ev.preventDefault(); oeffnen(k, a);
+  });
+  brief.addEventListener("click", (ev) => {
+    if (ev.target.closest(".zu")) { schliessen(); return; }
+    const z = ev.target.closest("[data-lk]"); // Nachbarkonzept: in der Karte bleiben, wenn es dort zu sehen ist
+    const a2 = z && svg.querySelector(`a[data-id="${CSS.escape(z.dataset.lk)}"]`), k2 = konzept(a2);
+    if (k2) { ev.preventDefault(); oeffnen(k2, a2); }
+  });
+  const taste = (ev) => { if (ev.key === "Escape" && !brief.hidden) { ev.stopPropagation(); schliessen(); } };
+  box.addEventListener("keydown", taste); document.addEventListener("keydown", taste, true);
+  new MutationObserver((_, mo) => { if (!box.isConnected) { document.removeEventListener("keydown", taste, true); mo.disconnect(); } }).observe(document.body, { childList: true, subtree: true });
+}
+
+let karteOpt = { vorschlaege: true, einheit: "" };
+async function zeigeLandkarte() {
+  const [n, fragen, st] = await Promise.all([ladeNetz(), ladeFragen(), ladeLernstand()]);
+  if (!n.vorhanden) { $("#haupt").innerHTML = `<h1>Landkarte</h1><p>Noch kein Wissensnetz vorhanden (<code>_lerntool/netz/wissensnetz.json</code>).</p>`; return; }
+  $("#haupt").innerHTML = `<h1>Landkarte</h1><p class="laedt" role="status">Die Karte wird berechnet …</p>`;
+  await new Promise((r) => setTimeout(r, 20)); // Hinweis zuerst zeichnen, dann rechnen (kein requestAnimationFrame: läuft in verdeckten Tabs nicht)
+  const aktiv = fragen.filter(frageAktiv);
+  const sichtbar = (x) => x.status !== "abgelehnt" && (karteOpt.vorschlaege || x.herkunft !== "vorschlag");
+  const konzepte = n.konzepte.filter(sichtbar), erlaubt = new Set(konzepte.map((x) => x.id));
+  const kanten = n.beziehungen.filter((b) => sichtbar(b) && erlaubt.has(b.von) && erlaubt.has(b.nach));
+  const einheiten = [...new Set(n.konzepte.flatMap((x) => (x.belege || []).map((b) => b.einheit)))];
+  const inEinheit = (x) => !karteOpt.einheit || (x.belege || []).some((b) => b.einheit === karteOpt.einheit);
+  const kurz = (t) => (t.length > 24 ? t.slice(0, 23) + "…" : t);
+  const breite = konzepte.map((x) => kurz(x.name).length * 7.2 + 18);
+  // Höhe nach Platzbedarf der Kästen, damit sich Beschriftungen nicht überdecken müssen.
+  const flaeche = breite.reduce((a, b) => a + b + 14, 0) * 40 * 1.8, W = Math.max(1180, Math.round(Math.sqrt(flaeche * 1.45))), H = Math.max(820, Math.round(flaeche / W)), pos = layoutKraefte(konzepte.map((x) => x.id), kanten, breite, W, H);
+  const bw = Object.fromEntries(konzepte.map((x, i) => [x.id, breite[i]]));
+  const rand = (id, o) => { // Punkt, an dem die Linie zum Ziel den Kasten von id verlässt
+    const [x, y] = pos[id], [ox, oy] = pos[o], dx = ox - x, dy = oy - y, t = Math.min((bw[id] / 2) / (Math.abs(dx) || 1e-6), 15 / (Math.abs(dy) || 1e-6), 1);
+    return [x + dx * t, y + dy * t];
+  };
+  const linien = kanten.map((b) => {
+    const [x1, y1] = rand(b.von, b.nach), [x2, y2] = rand(b.nach, b.von), an = !inEinheit(n.konzepte.find((x) => x.id === b.von)) || !inEinheit(n.konzepte.find((x) => x.id === b.nach));
+    return `<line class="kante ${b.status} ${b.herkunft} ${an ? "blass" : ""}" data-von="${esc(b.von)}" data-nach="${esc(b.nach)}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" marker-end="url(#lk-pf)"><title>${esc((n.konzeptNamen[b.von] || b.von) + " " + (BEZ[b.art] || b.art) + " " + (n.konzeptNamen[b.nach] || b.nach))} · ${b.herkunft === "vorschlag" ? "Vorschlag (KI-Ergänzung)" : "aus dem Dokument"}</title></line>`;
+  }).join("");
+  const stufen = Object.fromEntries(konzepte.map((x) => [x.id, stufe(x.id, aktiv, st)]));
+  const knoten = konzepte.map((x) => {
+    const [px, py] = pos[x.id];
+    return `<a href="#/netz/${encodeURIComponent(x.id)}" data-id="${esc(x.id)}" aria-label="${esc(x.name)}: ${esc(x.beschreibung)}"><g class="knoten s-${stufen[x.id]} ${x.herkunft === "vorschlag" ? "vorschlag" : ""} ${inEinheit(x) ? "" : "blass"}"><rect rx="6"></rect><text x="${px}" y="${py}" text-anchor="middle" dominant-baseline="central">${esc(kurz(x.name))}</text></g></a>`;
+  }).join("");
+  const zahlen = STUFE_REIHE.map((s) => `${stufeChip(s)} ${konzepte.filter((x) => stufen[x.id] === s).length}`).join(" &nbsp; ");
+  $("#haupt").innerHTML = `<h1>Landkarte</h1>
+    <p class="leise">Alle Konzepte des <a href="#/netz">Wissensnetzes</a> auf einer Fläche, ${konzepte.length} Konzepte und ${kanten.length} Beziehungen. Mit der Maus über einem Begriff erscheint seine Kurzdefinition, ein Klick öffnet den Steckbrief mit dem, was in den Unterlagen dazu steht. Die Anordnung rechnet der Browser aus: verbundene Konzepte liegen nah beieinander, sonst bedeutet die Lage nichts. Die Farbe zeigt deine <a href="#/">Lernstufe</a>.</p>
+    ${lernstandHinweis()}
+    <div class="filter"><label><input type="checkbox" id="lk-vorschlag" ${karteOpt.vorschlaege ? "checked" : ""}> Vorschläge (KI-Ergänzung) zeigen</label>
+      <select id="lk-einheit" aria-label="Einheit"><option value="">alle Einheiten</option>${einheiten.map((id) => `<option value="${esc(id)}" ${karteOpt.einheit === id ? "selected" : ""}>${esc(kurzName(id))}</option>`).join("")}</select>
+      <span class="leise">${zahlen}</span></div>
+    <div class="legende">
+      <span><svg width="34" height="10"><line x1="0" y1="5" x2="34" y2="5" class="kante ki-entwurf"/></svg>aus dem Dokument</span>
+      <span><svg width="34" height="10"><line x1="0" y1="5" x2="34" y2="5" class="kante ki-entwurf vorschlag"/></svg>Vorschlag (KI-Ergänzung)</span>
+      <span>Kasten gestrichelt = Konzept ist ein Vorschlag</span></div>
+    <div class="graph landkarte" id="lk-box"><div class="lk-werkzeug"><span class="lk-hinweis" id="lk-hinweis" title="Mausrad zoomt · Umschalt + Mausrad oder Ziehen verschiebt · Alt + Mausrad: hoch/runter · Pfeiltasten im Vollbild">Mausrad: Zoom · Ziehen: verschieben</span><span class="lk-hinweis" id="lk-zaehl"></span><button type="button" id="lk-plus" aria-label="Vergrößern" title="Vergrößern">+</button><button type="button" id="lk-minus" aria-label="Verkleinern" title="Verkleinern">−</button><button type="button" id="lk-reset" title="Ganze Karte zeigen">Alles</button><button type="button" id="lk-voll" title="Vollbild (Esc beendet)">Vollbild</button></div><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Landkarte aller Konzepte">
+      <defs><marker id="lk-pf" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="pf-ki-entwurf" d="M0,1 L10,5 L0,9 z"></path></marker></defs>
+      ${linien}${knoten}</svg></div>`;
+  rahmeKnoten();
+  landkarteZoom($("#lk-box"), W, H);
+  landkarteSteckbrief($("#lk-box"), n, stufen);
+  $("#lk-vorschlag").addEventListener("change", (ev) => { karteOpt.vorschlaege = ev.target.checked; zeigeLandkarte(); });
+  $("#lk-einheit").addEventListener("change", (ev) => { karteOpt.einheit = ev.target.value; zeigeLandkarte(); });
+}
+
+async function route() {
+  const teile = location.hash.replace(/^#\/?/, "").split("/").map(decodeURIComponent);
+  document.querySelectorAll("header nav a").forEach((a) => {
+    const an = (a.dataset.nav === "start" && (!teile[0] || teile[0] === "fortschritt")) || a.dataset.nav === teile[0];
+    a.classList.toggle("aktiv", an);
+    if (an) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+  });
+  kursliste(false);
+  const haupt = $("#haupt");
+  haupt.setAttribute("aria-busy", "true");
+  haupt.innerHTML = `<p class="laedt" role="status">Wird geladen …</p>`;
+  document.title = "PH-Lerntool";
+  lernTasten = null;
+  try {
+    if (teile[0] === "einheit") { navigation(teile[1]); await zeigeEinheit(teile[1], teile[2]); }
+    else { navigation(null);
+      if (teile[0] === "links") await zeigeLinks();
+      else if (teile[0] === "bibliothek") await zeigeBibliothek();
+      else if (teile[0] === "recht") await zeigeRecht(teile[1]);
+      else if (teile[0] === "formeln") await zeigeFormeln(teile[1]);
+      else if (teile[0] === "wissen") await zeigeWissen();
+      else if (teile[0] === "netz") await zeigeNetz(teile[1]);
+      else if (teile[0] === "landkarte") await zeigeLandkarte();
+      else if (teile[0] === "freigabe") await zeigeFreigabe();
+      else if (teile[0] === "lernen") await zeigeLernen(teile[1], teile[2]);
+      else if (teile[0] === "fortschritt") await zeigeFortschritt();
+      else if (teile[0] === "suche") await zeigeSuche(teile.slice(1).join("/"));
+      else if (!teile[0] || teile[0] === "fortschritt") await zeigeStart();
+      else $("#haupt").innerHTML = `<h1>Seite nicht gefunden</h1><p>Die Adresse „#/${esc(teile.join("/"))}“ gibt es im Lerntool nicht.</p><p><a class="knopf primaer" href="#/">Zum Dashboard</a></p>`;
+      if (!((teile[0] === "recht" || teile[0] === "formeln") && teile[1])) window.scrollTo(0, 0); }
+  } catch (err) {
+    $("#haupt").innerHTML = err.status === 404
+      ? `<h1>Nicht gefunden</h1><p>Das Gesuchte gibt es nicht (mehr). Vielleicht wurde die Datei umbenannt oder neu importiert.</p><p><a class="knopf primaer" href="#/">Zum Dashboard</a></p><p class="leise">${esc(err.message)}</p>`
+      : err.status
+        ? `<h1>Fehler</h1><p>Der Server meldet einen Fehler (${esc(String(err.status))}).</p><p class="leise">${esc(err.message)}</p>`
+        : `<h1>Keine Verbindung</h1><p>Das Lerntool antwortet nicht. Läuft „phl app“ noch? Sonst neu starten und diese Seite neu laden.</p><p class="leise">${esc(err.message)}</p>`;
+  } finally { $("#haupt").removeAttribute("aria-busy"); }
+}
+
+$("#suchform").addEventListener("submit", (ev) => { ev.preventDefault(); const q = $("#suche").value.trim(); if (q) location.hash = "#/suche/" + encodeURIComponent(q); });
+document.addEventListener("click", (ev) => {
+  if (ev.target.matches(".seite img")) { const z = $("#zoom"); z.querySelector("img").src = ev.target.src; z.style.display = "flex"; }
+  else if (ev.target.closest("#zoom")) $("#zoom").style.display = "none";
+});
+document.addEventListener("keydown", (ev) => {
+  if (ev.key === "Escape") $("#zoom").style.display = "none";
+  else if (lernTasten && !ev.ctrlKey && !ev.metaKey && !ev.altKey && !ev.target.matches?.("input, textarea, select")) lernTasten(ev);
+});
+window.addEventListener("hashchange", route);
+// Kursliste: auf dem Handy eingeklappt, der Knopf „Kurse“ öffnet sie.
+function kursliste(offen) {
+  $("#navi").classList.toggle("offen", offen);
+  $("#navi-knopf").setAttribute("aria-expanded", String(offen));
+}
+$("#navi-knopf").addEventListener("click", () => kursliste(!$("#navi").classList.contains("offen")));
+// Sprunglink: Fokus in den Inhalt, ohne die Hash-Route zu ändern.
+$("#sprung").addEventListener("click", (ev) => { ev.preventDefault(); $("#haupt").focus(); });
+if (STATISCH) {
+  // Weitergegebene Fassung: Hinweis zur Herkunft, keine Freigabe-Seite (sie ist nur für die Pflege der Daten gedacht), App-Installation und Offline-Betrieb.
+  const st = document.createElement("style");
+  st.textContent = '[data-nav="freigabe"]{display:none}.statisch-hinweis{margin:32px 16px 16px;padding:12px 14px;border:1px solid var(--linie);background:var(--flaeche);border-radius:8px;font-size:.85rem;color:var(--leise,#555)}';
+  document.head.appendChild(st);
+  document.body.insertAdjacentHTML("beforeend", `<p class="statisch-hinweis">Von einer Studierenden für Studierende gebaut, kein offizielles Material der MedUni Wien. Gliederungen, Fragen und Wissensnetz sind KI-Entwürfe und noch nicht fachlich geprüft: bitte immer mit den Originalunterlagen abgleichen. Rechtstexte: Quelle: RIS, Bundeskanzleramt (CC BY 4.0). Dein Lernstand bleibt nur in diesem Browser.</p>`);
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register(BASIS + "/sw.js", { scope: BASIS + "/" }).catch(() => {});
+}
+holen("/api/bestand").then((b) => { bestand = b; route(); })
+  .catch((err) => { $("#haupt").innerHTML = `<h1>Keine Daten</h1><p>${esc(err.message)}</p>`; });
+</script>
+</body>
+</html>
