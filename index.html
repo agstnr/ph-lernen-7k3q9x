@@ -1055,7 +1055,7 @@ async function zeigeLernen(art, wert) {
       <select id="l-einheit" aria-label="Einheit"><option value="">alle Einheiten</option>${Object.entries(nachKurs).map(([kurs, ids]) => `<optgroup label="${esc(kurs)}">${ids.map((id) =>
         `<option value="${esc(id)}" ${lernFilter.einheit === id ? "selected" : ""}>${esc(kurzName(id))}</option>`).join("")}</optgroup>`).join("")}</select>
       <select id="l-konzept" aria-label="Konzept"><option value="">alle Konzepte</option>${konzepte.map((id) => `<option value="${esc(id)}" ${lernFilter.konzept === id ? "selected" : ""}>${esc(n.konzeptNamen[id] || id)}</option>`).join("")}</select>
-      <span class="leise">${auswahl.length} Fragen · ${faellig.length} fällig · ${neue.length} neu${sitzung.grenzeErreicht ? ` (Grenze ${st.einstellungen.neuProTag} neue pro Tag)` : ""}</span>
+      <span class="leise">${auswahl.length} Auswahlfragen · ${faellig.length} fällig · ${neue.length} neu${sitzung.grenzeErreicht ? ` (Grenze ${st.einstellungen.neuProTag} neue pro Tag)` : ""}</span>
     </div>
     <div id="lern-flaeche"></div>`;
   const optionen = document.createElement("div");
@@ -1083,13 +1083,13 @@ async function zeigeAbdeckung(fragen) {
     if (!box.isConnected) return;
     const units = abdeckungDaten.einheiten.filter((e) => !lernFilter.einheit || e.einheit === lernFilter.einheit);
     const covered = new Set(fragen.filter(frageAktiv).flatMap((q) => (q.belege || []).flatMap((b) => b.seiten.map((nr) => b.einheit + ":" + nr))));
-    box.innerHTML = `<div class="norm"><h2>Folienabdeckung</h2><p>Ein Seitenbeleg bedeutet noch nicht, dass jeder Inhalt dieser Seite abgefragt wird. Die zusätzlichen Lückentextfragen decken Textstellen ab; Diagramme und die fachliche Vollständigkeit müssen gesondert geprüft werden.</p>
+    box.innerHTML = `<div class="norm"><h2>Folienabdeckung</h2><p>Alle Lernseiten sind mit Auswahlfragen verbunden. Single Choice hat eine richtige Antwort, Multiple Choice mehrere. Bei passenden Fragen werden ausschließlich zugeordnete Diagramme und Tabellen angezeigt. Die Seitenabdeckung zeigt den Umfang des Fragenbestands; sie ersetzt keine unabhängige fachliche Einzelprüfung.</p>
       ${units.map((e) => {
         const open = e.seitendetails.filter((p) => !covered.has(e.einheit + ":" + p.seite));
-        const visual = e.seitendetails.filter((p) => p.visuell_pruefen);
+        const visual = e.seitendetails.filter((p) => p.grafiken > 0);
         const links = (pages) => pages.map((p) => `<a href="#/einheit/${encodeURIComponent(e.einheit)}/${p.seite}" target="_blank" rel="noopener">${p.seite}</a>`).join(", ");
         return `<details><summary>${esc(kurzName(e.einheit))}: ${e.seiten - open.length}/${e.seiten} Seiten mit Fragenbeleg</summary>
-          <p>Ohne Fragenbeleg (${open.length}): ${links(open) || "keine"}</p><p>Bildinhalte gesondert prüfen (${visual.length}): ${links(visual) || "keine textarmen Seiten markiert"}</p></details>`;
+          <p>Ohne Fragenbeleg (${open.length}): ${links(open) || "keine"}</p><p>Seiten mit zugeordnetem Diagramm oder Tabelle (${visual.length}): ${links(visual) || "keine zugeordneten Diagramme"}</p></details>`;
       }).join("")}</div>`;
   } catch { box.innerHTML = '<p class="hinweis">Die Abdeckung konnte nicht geladen werden.</p>'; }
 }
@@ -1147,7 +1147,6 @@ function zeigeKarte() {
       else if (selected.has(i)) b.classList.add("falsch");
     });
     $("#l-pruefen").remove();
-    const hint = $("#l-bild-hinweis"); if (hint) hint.open = true;
     aufl.innerHTML = `<div class="aufloesung" role="status"><div><strong>${richtig ? "Richtig." : "Nicht richtig. Alle richtigen Antworten sind grün markiert."}</strong> ${esc(q.erklaerung || "")}</div>${beleg}
       ${richtig ? knoepfe([2, 3, 4]) : '<div class="aktionen"><button class="knopf primaer" data-note="1">Weiter</button></div>'}</div>`;
     bewerten();
@@ -1171,28 +1170,19 @@ function zeigeKarte() {
   });
 }
 
-const einheitCache = new Map();
-async function zeigeFrageBilder(q) {
+// Only explicitly assigned diagram/table crops belong in a question. Never fall back to a full page image.
+function zeigeFrageBilder(q) {
   const ziel = $("#l-bilder");
-  const bilder = [];
-  try {
-    for (const b of q.belege || []) {
-      if (!einheitCache.has(b.einheit)) {
-        const p = holen("/api/einheit/" + encodeURIComponent(b.einheit)).catch((e) => { einheitCache.delete(b.einheit); throw e; });
-        einheitCache.set(b.einheit, p);
-      }
-      const d = await einheitCache.get(b.einheit);
-      for (const nr of b.seiten) {
-        const seite = d.seiten.find((p) => p.nr === nr);
-        if (seite?.bild && !bilder.some((p) => p.url === seite.bild)) bilder.push({ url: seite.bild, nr, einheit: b.einheit });
-      }
-    }
-    if (!ziel.isConnected || sitzung?.aktiv !== q.id) return;
-    ziel.innerHTML = (q.herkunft === "folien-luecke" ? '<details id="l-bild-hinweis"' + ($("#l-pruefen") ? '' : ' open') + '><summary>Originalfolie anzeigen (enthält die Lösung)</summary>' : "") + bilder.map((p) => `<figure><img src="${esc(p.url)}" alt="Originalfolie ${p.nr} aus ${esc(kurzName(p.einheit))}" loading="lazy" tabindex="0"><figcaption>Originalfolie ${p.nr} · zum Vergrößern anklicken</figcaption></figure>`).join("") + (q.herkunft === "folien-luecke" ? "</details>" : "");
-    ziel.querySelectorAll("img").forEach((img) => img.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); img.click(); } }));
-  } catch {
-    if (ziel.isConnected) ziel.innerHTML = '<p class="hinweis">Folienbild konnte nicht geladen werden. Bitte die verlinkte Quelle öffnen.</p>';
-  }
+  const bilder = [...new Map((q.grafiken || []).map((g) => [g.src, g])).values()];
+  ziel.innerHTML = bilder.map((g) => `<figure><img src="${esc(g.src)}" alt="${esc(g.alt)}" loading="lazy" tabindex="0"><figcaption>Diagramm / Tabelle · ${esc(kurzName(g.einheit))}, Folie ${g.seite} · zum Vergrößern anklicken</figcaption></figure>`).join("");
+  ziel.querySelectorAll("img").forEach((img) => {
+    img.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); img.click(); } });
+    img.addEventListener("error", () => {
+      const warnung = document.createElement("p"); warnung.className = "hinweis";
+      warnung.textContent = "Die zugehörige Grafik konnte nicht geladen werden. Bitte den Seitenbeleg öffnen.";
+      img.replaceWith(warnung);
+    });
+  });
 }
 
 async function bewerteKarte(q, note) {

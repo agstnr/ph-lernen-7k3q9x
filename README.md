@@ -1,33 +1,39 @@
 # PH Lernen
 
-Static GitHub Pages app. The current expansion is a **draft**, not a claim of exhaustive subject coverage.
+Statische Lernanwendung für GitHub Pages.
 
-## Learning changes
+## Auswahlfragen
 
-- All 4,127 questions use answer choices. The 171 former recall cards retain their IDs, original answers and source references; their changed choice versions are marked as drafts.
-- Multiple choice supports selecting and deselecting answers, explicit submission, and exact-set grading. Selecting only some correct options is incorrect.
-- 3,867 automatically generated single-choice cloze questions supplement the existing questions. They test the **original wording** of text passages, not necessarily understanding or application. They are not individually reviewed. Distractors for converted cards are other answers from the same course and need editorial review.
-- All 1,830 pages of the 31 original PDFs have WebP page images restored from SHA-256-verified originals. Existing question sources display these pages. Cloze questions offer the source page as an optional hint and expand it after submission so the page does not immediately reveal the answer.
-- “Alle Fragen dieser Auswahl durchgehen” includes every active question in the current filter, including already learned questions, independently of the daily new-card limit.
-- “Folienabdeckung ansehen” lists pages without a question reference and pages flagged as visually rich. A reference alone does **not** demonstrate full content coverage.
+Der Bestand enthält 2.764 vollständige Auswahlfragen: 2.369 Single-Choice- und 395 Multiple-Choice-Fragen. Es gibt keine Lückentextaufgaben. Multiple Choice verlangt die vollständige richtige Antwortmenge; fehlende oder zusätzliche Antworten werden nicht als richtig gewertet. Antworten lassen sich vor dem expliziten Prüfen ändern.
 
-## Remaining work before claiming full coverage
+Die bisherigen 260 Fragen bleiben erhalten, darunter 171 umgestellte Freitextkarten mit stabilen IDs und gespeicherten Originalantworten. 2.042 Fragen behandeln vollständige Aussagen aus den Unterlagen. 462 zusätzliche redaktionelle Auswahlfragen bearbeiten die zuvor offenen Seiten, darunter Verständnisfragen zu Diagrammen, Tabellen und Methoden. Auch Kapiteltrenner, Kontakt- und reine Illustrationsseiten sind eingeordnet. Diese liefern selbst keine neuen fachlichen Ergebnisse.
 
-`data/abdeckung.json` tracks 1,824 pages of learning material/source documents. Of these, 462 have no new generated text question. Some already have existing questions; others are title, reference or diagram pages. Each needs classification. Every visual learning objective must be checked against the restored page image and given a meaningful choice question where relevant. Text questions also need semantic review for omissions, suitable distractors, and factual accuracy. Neither the question count nor the presence of a question on a page proves that every learning objective has been covered.
+Alle 1.824 Seiten mit der Rolle Lerninhalt/Quelle sind mit Fragen verknüpft. Ein Fragenbeleg je Seite bestätigt die Seitenabdeckung, nicht die unabhängige Prüfung jedes einzelnen Lernziels. Neu erstellte und veränderte Fragen bleiben als Entwürfe erkennbar und können im Tool gelernt oder als fehlerhaft gemeldet werden. Aussagenfragen verwenden belegte Quelltexte und explizit falsche Antwortalternativen aus einer fachspezifischen Sammlung; nicht jede automatisch kombinierte Frage wurde einzeln didaktisch geprüft.
 
-The six pages of literature lists, the spreadsheet and the original exam-question documents are not expanded automatically. Existing questions remain available.
+## Grafiken
 
-## Validation
+Fragen zeigen nur explizit zugeordnete Ausschnitte von Diagrammen, Tabellen, Modellen oder vergleichbaren fachlichen Abbildungen. Die Grafikliste liegt in `data/grafiken.json`, die Ausschnittkoordinaten in `data/redaktion/grafik-ausschnitte.json`. Logos, dekorative Fotos und vollständige Folien werden nicht automatisch an Fragen angehängt. Die 1.830 vollständigen PDF-Seitenbilder bleiben in der Quellenansicht verfügbar.
+
+## Umfang und Lernstand
+
+„Alle Fragen dieser Auswahl durchgehen“ startet eine Runde mit allen aktiven Fragen der aktuellen Filterauswahl, auch bereits gelernten, unabhängig vom Tageslimit. Die reguläre Wiederholungsrunde und die individuellen Lernstände bleiben erhalten. „Folienabdeckung ansehen“ zeigt die Seitenbelege und die zugeordneten Grafiken.
+
+## Pflege
+
+- `data/redaktion/textbausteine.json`: vollständige Textstellen mit Seitenbelegen.
+- `data/redaktion/offene-seiten.tsv`: die 462 ergänzten redaktionellen Fragen.
+- `data/redaktion/fehlaussagen.json`: explizit falsche Aussagen, ausschließlich als falsche Antwortoptionen.
+- `data/redaktion/seitenauswahl.json`: stabile Zuordnung der ursprünglich offenen Seiten.
+- `python scripts/expand_questions.py`: reproduzierbare Erzeugung der Fragen und Abdeckungsdaten.
+
+Literaturlisten, Datensatz und originale Prüfungsdokumente werden nicht künstlich zu Folieninhalten umgedeutet; vorhandene Fragen dazu bleiben verfügbar.
+
+## Prüfungen
 
 ```sh
 node --test tests/choice.test.cjs
 python tests/data.test.py
-```
-
-Browser flow checks (requires Playwright and Chromium, serve the repo under `/ph-lernen-7k3q9x/`):
-
-```sh
 PH_TEST_URL=http://localhost:8765/ph-lernen-7k3q9x/ node tests/browser.cjs
 ```
 
-`python scripts/expand_questions.py` regenerates cloze drafts and the coverage manifest deterministically from the repository's page text. It does not infer diagram meaning. `scripts/restore_slides.py` accepts a local JSON download manifest and verifies the source PDF hashes before rendering. No account credentials, signed download links or private Drive IDs are needed in the repository.
+Der Browsertest benötigt Playwright und Chromium. `scripts/restore_slides.py` rendert vollständige Quellenbilder aus lokalen, SHA-256-geprüften PDF-Originalen. `scripts/extract_graphics.py` verwendet dieselben lokalen Originale und die redaktionell festgelegten Ausschnittkoordinaten für die Fragegrafiken. Zugangsdaten und private Downloadlinks gehören nicht ins Repository.
