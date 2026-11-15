@@ -85,6 +85,9 @@ def main():
   details=[{'seite':p['nr'],'fragen':covered[(unit,p['nr'])],'grafiken':len(gmap.get((unit,p['nr']),[])),'ergaenzt_aus_offenen_seiten':{'einheit':unit,'seite':p['nr']} in missing,'status':'fragen-vorhanden' if covered[(unit,p['nr'])] else 'offen'} for p in d['seiten']]
   report['einheiten'].append({'einheit':unit,'seiten':len(d['seiten']),'seitendetails':details})
  assert all(p['fragen'] for e in report['einheiten'] for p in e['seitendetails'])
+ approval=read('data/redaktion/freigaben.json');approved=set(approval['fragen_ids'])
+ for q in qs:
+  if q['id'] in approved:q['status']='geprueft';q['freigabe']=approval['freigabe']
  dump('data/fragen.json',{'fragen':qs});dump('data/abdeckung.json',report)
  print('Questions',len(qs),collections.Counter(q['modus'] for q in qs),'editorial additions',len(indices),'graphics',len(graphics))
 if __name__=='__main__':main()

@@ -8,7 +8,7 @@ Der Bestand enthält 2.764 vollständige Auswahlfragen: 2.369 Single-Choice- und
 
 Die bisherigen 260 Fragen bleiben erhalten, darunter 171 umgestellte Freitextkarten mit stabilen IDs und gespeicherten Originalantworten. 2.042 Fragen behandeln vollständige Aussagen aus den Unterlagen. 462 zusätzliche redaktionelle Auswahlfragen bearbeiten die zuvor offenen Seiten, darunter Verständnisfragen zu Diagrammen, Tabellen und Methoden. Auch Kapiteltrenner, Kontakt- und reine Illustrationsseiten sind eingeordnet. Diese liefern selbst keine neuen fachlichen Ergebnisse.
 
-Alle 1.824 Seiten mit der Rolle Lerninhalt/Quelle sind mit Fragen verknüpft. Ein Fragenbeleg je Seite bestätigt die Seitenabdeckung, nicht die unabhängige Prüfung jedes einzelnen Lernziels. Neu erstellte und veränderte Fragen bleiben als Entwürfe erkennbar und können im Tool gelernt oder als fehlerhaft gemeldet werden. Aussagenfragen verwenden belegte Quelltexte und explizit falsche Antwortalternativen aus einer fachspezifischen Sammlung; nicht jede automatisch kombinierte Frage wurde einzeln didaktisch geprüft.
+Alle 1.824 Seiten mit der Rolle Lerninhalt/Quelle sind mit Fragen verknüpft. Ein Fragenbeleg je Seite bestätigt die Seitenabdeckung, nicht die unabhängige Prüfung jedes einzelnen Lernziels. Alle vorhandenen Fragen wurden von der Nutzerin als geprüft freigegeben. Die Freigabe ist in `data/redaktion/freigaben.json` mit den Frage-IDs dokumentiert und bleibt beim Neuaufbau erhalten.
 
 ## Grafiken
 

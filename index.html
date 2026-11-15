@@ -1110,7 +1110,6 @@ function zeigeKarte() {
         <span class="leise" style="font-size:13px">${esc(kurzName(q.einheit))} · noch ${offen} in dieser Runde</span></div>
       <div class="frage">${esc(q.frage)}</div>
       <div class="leise" id="l-typ">${Choice.multiple(q) ? "Multiple Choice – wähle alle richtigen Antworten." : "Single Choice – wähle eine Antwort."}</div>
-      ${q.status !== "geprueft" ? '<span class="chip gelb">Fragenentwurf · noch nicht einzeln geprüft</span>' : ""}
       <div class="lern-bilder" id="l-bilder"></div>
       <div class="optionen">${mische(q.optionen.map((o, i) => ({ ...o, i }))).map((o, nr) =>
         `<button data-option="${o.i}" aria-pressed="false"><strong>${String.fromCharCode(97 + nr)})</strong> ${esc(o.text)}<span class="erkl" hidden>${esc(o.erklaerung || "")}</span></button>`).join("")}</div>
@@ -1945,7 +1944,7 @@ if (STATISCH) {
   const st = document.createElement("style");
   st.textContent = '[data-nav="freigabe"]{display:none}.statisch-hinweis{margin:32px 16px 16px;padding:12px 14px;border:1px solid var(--linie);background:var(--flaeche);border-radius:8px;font-size:.85rem;color:var(--leise,#555)}';
   document.head.appendChild(st);
-  document.body.insertAdjacentHTML("beforeend", `<p class="statisch-hinweis">Von einer Studierenden für Studierende gebaut, kein offizielles Material der MedUni Wien. Gliederungen, Fragen und Wissensnetz sind KI-Entwürfe und noch nicht fachlich geprüft: bitte immer mit den Originalunterlagen abgleichen. Rechtstexte: Quelle: RIS, Bundeskanzleramt (CC BY 4.0). Dein Lernstand bleibt nur in diesem Browser.</p>`);
+  document.body.insertAdjacentHTML("beforeend", `<p class="statisch-hinweis">Von einer Studierenden für Studierende gebaut, kein offizielles Material der MedUni Wien. Gliederungen und Wissensnetz sind KI-Entwürfe und noch nicht fachlich geprüft: bitte immer mit den Originalunterlagen abgleichen. Rechtstexte: Quelle: RIS, Bundeskanzleramt (CC BY 4.0). Dein Lernstand bleibt nur in diesem Browser.</p>`);
   if ("serviceWorker" in navigator) navigator.serviceWorker.register(BASIS + "/sw.js", { scope: BASIS + "/" }).catch(() => {});
 }
 holen("/api/bestand").then((b) => { bestand = b; route(); })
