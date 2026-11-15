@@ -164,6 +164,10 @@
   .optionen { display: grid; gap: 8px; }
   .optionen button { text-align: left; padding: 9px 12px; border: 1px solid var(--linie); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; cursor: pointer; }
   .optionen button:hover:not(:disabled) { border-color: var(--akzent); }
+  .optionen button[aria-pressed="true"] { outline: 2px solid var(--akzent); background: var(--akzent-hell); }
+  .lern-bilder img { max-width: 100%; max-height: 440px; object-fit: contain; cursor: zoom-in; background: white; }
+  .lern-bilder figure { margin: 12px 0; }
+  .lern-bilder figcaption { font-size: 12px; color: var(--leise); }
   .optionen button:disabled { cursor: default; }
   .optionen button.richtig { border-color: var(--akzent); background: var(--akzent-hell); }
   .optionen button.falsch { border-color: var(--rot); background: var(--rot-hell); }
@@ -288,6 +292,7 @@
 <div class="zoom" id="zoom"><img alt=""></div>
 <script>window.STATISCH = true; window.STATISCH_BASIS = "/ph-lernen-7k3q9x";</script>
 <script src="/ph-lernen-7k3q9x/app/fsrs.js"></script>
+<script src="/ph-lernen-7k3q9x/app/choice.js"></script>
 <script>
 "use strict";
 const ROLLEN = { lerninhalt: "Lerninhalt", literaturliste: "Literaturliste", quelle: "Quelle", datensatz: "Datensatz", pruefung: "Prüfungsfragen",
@@ -314,6 +319,7 @@ const zahl = (n) => Number(n).toLocaleString("de-AT");
 const STATISCH = !!window.STATISCH;
 const BASIS = window.STATISCH_BASIS || ""; // Unterpfad, z. B. "/ph-lernen" bei GitHub Pages (ohne Schrägstrich am Ende)
 let suchIndex = null;
+let abdeckungDaten = null;
 async function sucheStatisch(q) {
   suchIndex ??= await (await fetch(BASIS + "/data/suchindex.json")).json();
   const begriffe = q.normalize("NFC").toLowerCase().split(/\s+/).filter((b) => b.length >= 2);
@@ -1049,12 +1055,43 @@ async function zeigeLernen(art, wert) {
       <select id="l-einheit" aria-label="Einheit"><option value="">alle Einheiten</option>${Object.entries(nachKurs).map(([kurs, ids]) => `<optgroup label="${esc(kurs)}">${ids.map((id) =>
         `<option value="${esc(id)}" ${lernFilter.einheit === id ? "selected" : ""}>${esc(kurzName(id))}</option>`).join("")}</optgroup>`).join("")}</select>
       <select id="l-konzept" aria-label="Konzept"><option value="">alle Konzepte</option>${konzepte.map((id) => `<option value="${esc(id)}" ${lernFilter.konzept === id ? "selected" : ""}>${esc(n.konzeptNamen[id] || id)}</option>`).join("")}</select>
-      <span class="leise">${auswahl.length} Fragen · ${faellig.length} fällig · ${neue.length} neu${sitzung.grenzeErreicht ? ` (Grenze ${st.einstellungen.neuProTag} neue pro Tag)` : ""}</span>
+      <span class="leise">${auswahl.length} Auswahlfragen · ${faellig.length} fällig · ${neue.length} neu${sitzung.grenzeErreicht ? ` (Grenze ${st.einstellungen.neuProTag} neue pro Tag)` : ""}</span>
     </div>
     <div id="lern-flaeche"></div>`;
+  const optionen = document.createElement("div");
+  optionen.className = "aktionen";
+  optionen.innerHTML = '<button class="knopf" id="l-alle">Alle Fragen dieser Auswahl durchgehen</button><button class="knopf" id="l-abdeckung">Folienabdeckung ansehen</button>';
+  $("#lern-flaeche").before(optionen);
+  const abdeckungBox = document.createElement("div"); abdeckungBox.id = "l-abdeckung-inhalt";
+  optionen.after(abdeckungBox);
+  $("#l-alle").addEventListener("click", () => {
+    sitzung.schlange = auswahl.map((q) => q.id); sitzung.rest = []; sitzung.pos = 0;
+    sitzung.beantwortet = 0; sitzung.nochmal = 0; sitzung.grenzeErreicht = false;
+    zeigeKarte();
+  });
+  $("#l-abdeckung").addEventListener("click", () => zeigeAbdeckung(auswahl));
   $("#l-einheit").addEventListener("change", (ev) => { lernFilter.einheit = ev.target.value; zeigeLernen(); });
   $("#l-konzept").addEventListener("change", (ev) => { lernFilter.konzept = ev.target.value; zeigeLernen(); });
   zeigeKarte();
+}
+
+async function zeigeAbdeckung(fragen) {
+  const box = $("#l-abdeckung-inhalt");
+  if (box.innerHTML) { box.innerHTML = ""; return; }
+  try {
+    abdeckungDaten ??= await holen("/api/abdeckung");
+    if (!box.isConnected) return;
+    const units = abdeckungDaten.einheiten.filter((e) => !lernFilter.einheit || e.einheit === lernFilter.einheit);
+    const covered = new Set(fragen.filter(frageAktiv).flatMap((q) => (q.belege || []).flatMap((b) => b.seiten.map((nr) => b.einheit + ":" + nr))));
+    box.innerHTML = `<div class="norm"><h2>Folienabdeckung</h2><p>Alle Lernseiten sind mit Auswahlfragen verbunden. Single Choice hat eine richtige Antwort, Multiple Choice mehrere. Bei passenden Fragen werden ausschließlich zugeordnete Diagramme und Tabellen angezeigt. Die Seitenabdeckung zeigt den Umfang des Fragenbestands; sie ersetzt keine unabhängige fachliche Einzelprüfung.</p>
+      ${units.map((e) => {
+        const open = e.seitendetails.filter((p) => !covered.has(e.einheit + ":" + p.seite));
+        const visual = e.seitendetails.filter((p) => p.grafiken > 0);
+        const links = (pages) => pages.map((p) => `<a href="#/einheit/${encodeURIComponent(e.einheit)}/${p.seite}" target="_blank" rel="noopener">${p.seite}</a>`).join(", ");
+        return `<details><summary>${esc(kurzName(e.einheit))}: ${e.seiten - open.length}/${e.seiten} Seiten mit Fragenbeleg</summary>
+          <p>Ohne Fragenbeleg (${open.length}): ${links(open) || "keine"}</p><p>Seiten mit zugeordnetem Diagramm oder Tabelle (${visual.length}): ${links(visual) || "keine zugeordneten Diagramme"}</p></details>`;
+      }).join("")}</div>`;
+  } catch { box.innerHTML = '<p class="hinweis">Die Abdeckung konnte nicht geladen werden.</p>'; }
 }
 
 function zeigeKarte() {
@@ -1072,10 +1109,12 @@ function zeigeKarte() {
       <div class="kopfzeile"><span class="chip">${karte ? "Wiederholung" : "neu"}</span>${q.herkunft === "pruefungsblatt" ? ' <span class="chip gruen" title="Frage und Möglichkeiten wortgleich vom Prüfungsblatt">Prüfungsfrage</span>' : ""}
         <span class="leise" style="font-size:13px">${esc(kurzName(q.einheit))} · noch ${offen} in dieser Runde</span></div>
       <div class="frage">${esc(q.frage)}</div>
-      ${q.typ === "karte" ? `<textarea id="l-eigene" placeholder="Deine Antwort (optional)" aria-label="Deine Antwort (optional)"></textarea>
-        <div class="aktionen"><button class="knopf primaer" id="l-zeigen">Antwort zeigen</button></div>`
-      : `<div class="optionen">${mische(q.optionen.map((o, i) => ({ ...o, i }))).map((o, nr) =>
-          `<button data-option="${o.i}"><strong>${"abcdefgh"[nr]})</strong> ${esc(o.text)}<span class="erkl" hidden>${esc(o.erklaerung || "")}</span></button>`).join("")}</div>`}
+      <div class="leise" id="l-typ">${Choice.multiple(q) ? "Multiple Choice – wähle alle richtigen Antworten." : "Single Choice – wähle eine Antwort."}</div>
+      ${q.status !== "geprueft" ? '<span class="chip gelb">Fragenentwurf · noch nicht einzeln geprüft</span>' : ""}
+      <div class="lern-bilder" id="l-bilder"></div>
+      <div class="optionen">${mische(q.optionen.map((o, i) => ({ ...o, i }))).map((o, nr) =>
+        `<button data-option="${o.i}" aria-pressed="false"><strong>${String.fromCharCode(97 + nr)})</strong> ${esc(o.text)}<span class="erkl" hidden>${esc(o.erklaerung || "")}</span></button>`).join("")}</div>
+      <div class="aktionen"><button class="knopf primaer" id="l-pruefen" disabled>Antwort prüfen</button></div>
       <div id="l-aufloesung"></div>
       <div class="aktionen" style="margin-top:16px">
         <button class="knopf" id="l-melden">Frage fehlerhaft melden</button>
@@ -1085,36 +1124,41 @@ function zeigeKarte() {
     </div>`;
   const aufl = $("#l-aufloesung");
   const bewerten = () => aufl.querySelectorAll("[data-note]").forEach((b) => b.addEventListener("click", () => bewerteKarte(q, Number(b.dataset.note))));
-  if (q.typ === "karte") {
-    const zeigen = () => {
-      if (!$("#l-zeigen")) return;
-      $("#l-zeigen").parentElement.remove(); $("#l-eigene").readOnly = true; $("#l-eigene").blur();
-      aufl.innerHTML = `<div class="aufloesung"><div><strong>Antwort:</strong> ${esc(q.antwort)}</div>
-        ${q.erklaerung ? `<div class="leise" style="margin-top:6px">${esc(q.erklaerung)}</div>` : ""}${beleg}
-        ${knoepfe([1, 2, 3, 4])}</div>`;
-      bewerten();
-      lernTasten = (ev) => { if (NOTEN[ev.key]) bewerteKarte(q, Number(ev.key)); };
-    };
-    $("#l-zeigen").addEventListener("click", zeigen);
-    lernTasten = (ev) => { if (ev.key === " " || ev.key === "Enter") { ev.preventDefault(); zeigen(); } };
-  } else {
-    const waehle = (b) => {
-      if (b.disabled) return;
-      const gewaehlt = q.optionen[Number(b.dataset.option)], richtig = gewaehlt.richtig;
-      flaeche.querySelectorAll("[data-option]").forEach((x) => {
-        x.disabled = true; x.querySelector(".erkl").hidden = false;
-        if (q.optionen[Number(x.dataset.option)].richtig) x.classList.add("richtig");
-      });
-      if (!richtig) b.classList.add("falsch");
-      aufl.innerHTML = `<div class="aufloesung"><div><strong>${richtig ? "Richtig." : "Nicht richtig."}</strong> ${q.erklaerung ? esc(q.erklaerung) : ""}</div>${beleg}
-        ${richtig ? `${knoepfe([2, 3, 4])}`
-          : `<div class="aktionen" style="margin-top:12px"><button class="knopf primaer" data-note="1">Weiter</button></div>`}</div>`;
-      bewerten();
-      lernTasten = (ev) => { if (richtig ? ["2", "3", "4"].includes(ev.key) : ev.key === "Enter" || ev.key === "1") { ev.preventDefault(); bewerteKarte(q, richtig ? Number(ev.key) : 1); } };
-    };
-    flaeche.querySelectorAll("[data-option]").forEach((b) => b.addEventListener("click", () => waehle(b)));
-    lernTasten = (ev) => { const i = "abcdefgh".indexOf(ev.key.toLowerCase()); const b = flaeche.querySelectorAll("[data-option]")[i]; if (i >= 0 && b) waehle(b); };
-  }
+  zeigeFrageBilder(q);
+  const selected = new Set(), multi = Choice.multiple(q);
+  let geprueft = false;
+  const buttons = [...flaeche.querySelectorAll("[data-option]")];
+  const waehle = (b) => {
+    if (geprueft) return;
+    const i = Number(b.dataset.option), remove = selected.has(i);
+    if (!multi) selected.clear();
+    if (remove) selected.delete(i); else selected.add(i);
+    buttons.forEach((x) => x.setAttribute("aria-pressed", String(selected.has(Number(x.dataset.option)))));
+    $("#l-pruefen").disabled = !selected.size;
+  };
+  const pruefen = () => {
+    if (geprueft || !selected.size) return;
+    geprueft = true;
+    const richtig = Choice.correct(q, selected);
+    buttons.forEach((b) => {
+      const i = Number(b.dataset.option);
+      b.disabled = true; b.querySelector(".erkl").hidden = false;
+      if (q.optionen[i].richtig) b.classList.add("richtig");
+      else if (selected.has(i)) b.classList.add("falsch");
+    });
+    $("#l-pruefen").remove();
+    aufl.innerHTML = `<div class="aufloesung" role="status"><div><strong>${richtig ? "Richtig." : "Nicht richtig. Alle richtigen Antworten sind grün markiert."}</strong> ${esc(q.erklaerung || "")}</div>${beleg}
+      ${richtig ? knoepfe([2, 3, 4]) : '<div class="aktionen"><button class="knopf primaer" data-note="1">Weiter</button></div>'}</div>`;
+    bewerten();
+    lernTasten = (ev) => { if (richtig ? ["2", "3", "4"].includes(ev.key) : ev.key === "Enter" || ev.key === "1") { ev.preventDefault(); bewerteKarte(q, richtig ? Number(ev.key) : 1); } };
+  };
+  buttons.forEach((b) => b.addEventListener("click", () => waehle(b)));
+  $("#l-pruefen").addEventListener("click", pruefen);
+  lernTasten = (ev) => {
+    if (ev.key === "Enter") { ev.preventDefault(); pruefen(); return; }
+    const i = "abcdefghijklmnopqrstuvwxyz".indexOf(ev.key.toLowerCase());
+    if (i >= 0 && buttons[i]) { ev.preventDefault(); waehle(buttons[i]); }
+  };
   $("#l-melden").addEventListener("click", () => { $("#l-melden").remove(); $("#l-meldefeld").style.display = "contents"; $("#l-meldenotiz").focus(); lernTasten = null; });
   $("#l-meldenOk").addEventListener("click", () => {
     const notiz = $("#l-meldenotiz").value.trim();
@@ -1123,6 +1167,21 @@ function zeigeKarte() {
     s.schlange = s.schlange.filter((id, i) => i < s.pos || id !== q.id);
     s.gemeldet = (s.gemeldet || 0) + 1;
     zeigeKarte();
+  });
+}
+
+// Only explicitly assigned diagram/table crops belong in a question. Never fall back to a full page image.
+function zeigeFrageBilder(q) {
+  const ziel = $("#l-bilder");
+  const bilder = [...new Map((q.grafiken || []).map((g) => [g.src, g])).values()];
+  ziel.innerHTML = bilder.map((g) => `<figure><img src="${esc(g.src)}" alt="${esc(g.alt)}" loading="lazy" tabindex="0"><figcaption>Diagramm / Tabelle · ${esc(kurzName(g.einheit))}, Folie ${g.seite} · zum Vergrößern anklicken</figcaption></figure>`).join("");
+  ziel.querySelectorAll("img").forEach((img) => {
+    img.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); img.click(); } });
+    img.addEventListener("error", () => {
+      const warnung = document.createElement("p"); warnung.className = "hinweis";
+      warnung.textContent = "Die zugehörige Grafik konnte nicht geladen werden. Bitte den Seitenbeleg öffnen.";
+      img.replaceWith(warnung);
+    });
   });
 }
 
@@ -1865,7 +1924,7 @@ async function route() {
 
 $("#suchform").addEventListener("submit", (ev) => { ev.preventDefault(); const q = $("#suche").value.trim(); if (q) location.hash = "#/suche/" + encodeURIComponent(q); });
 document.addEventListener("click", (ev) => {
-  if (ev.target.matches(".seite img")) { const z = $("#zoom"); z.querySelector("img").src = ev.target.src; z.style.display = "flex"; }
+  if (ev.target.matches(".seite img, .lern-bilder img")) { const z = $("#zoom"); z.querySelector("img").src = ev.target.src; z.style.display = "flex"; }
   else if (ev.target.closest("#zoom")) $("#zoom").style.display = "none";
 });
 document.addEventListener("keydown", (ev) => {
